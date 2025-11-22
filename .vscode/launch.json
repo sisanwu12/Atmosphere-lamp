@@ -1,0 +1,22 @@
+{
+    "configurations": [
+        {
+            "cwd": "${workspaceRoot}",
+            "executable": "./mcu/build/ATMOSPHERE_LAMP.elf",
+            "device": "STM32F103C8T6",
+            "name": "Debug with OpenOCD",
+            "request": "launch",
+            "type": "cortex-debug",
+            "servertype": "openocd",
+            "configFiles": [
+                "interface/cmsis-dap.cfg",
+                "target/stm32f1x.cfg"
+            ],
+            "searchDir": [],
+            "interface": "jtag",
+            "runToEntryPoint": "main",
+            "svdFile": "${workspaceRoot}/mcu/Libraries/CMSIS/STM32F103xx.svd",
+            "showDevDebugOutput": "none"
+        },
+    ]
+}
