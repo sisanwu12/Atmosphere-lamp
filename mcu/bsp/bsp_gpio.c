@@ -1,0 +1,46 @@
+/**
+ * @file		bsp_gpio.c
+ * @brief		用于定义该模块的函数
+ * @author	王广平
+ * @date		2025/11/23
+ */
+
+/* 头文件引用 */
+#include "bsp_gpio.h"
+#include "stm32f1xx_hal_gpio.h"
+#include "stm32f1xx_hal_rcc.h"
+
+/**
+ * @brief		gpio初始化函数
+ * @param		gpio 			指定GPIO结构体
+ * @param		GPIOMode	指定GPIO模式
+ * @param		GPIOPull	指定GPIO上拉下拉
+ * @param		GPIOSpeed	指定GPIO速度
+ * @return	初始化结果
+ */
+RESULT_Init bsp_gpio_Init(GPIO_TypeDef *GPIOx, u32 GPIOpin, u32 GPIOMode,
+                          u32 GPIOPull, u32 GPIOSpeed)
+{
+  RESULT_Init ret = ERR_Init_Start;
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+  /* 使能 GPIO 时钟 */
+  if (GPIOx == GPIOA)
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+  else if (GPIOx == GPIOB)
+    __HAL_RCC_GPIOB_CLK_ENABLE();
+  else if (GPIOx == GPIOC)
+    __HAL_RCC_GPIOC_CLK_ENABLE();
+  else if (GPIOx == GPIOD)
+    __HAL_RCC_GPIOD_CLK_ENABLE();
+
+  /* 配置 GPIO */
+  GPIO_InitStruct.Pin = GPIOpin;
+  GPIO_InitStruct.Mode = GPIOMode;
+  GPIO_InitStruct.Pull = GPIOPull;
+  GPIO_InitStruct.Speed = GPIOSpeed;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  ret = ERR_Init_Finished;
+  return ret;
+}

@@ -38,7 +38,7 @@
 #ifndef __STM32F1XX_H
 #define __STM32F1XX_H
 
-#define STM32F103x6
+#define STM32F103xB
 
 #ifdef __cplusplus
 extern "C"

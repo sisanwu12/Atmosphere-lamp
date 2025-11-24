@@ -22,6 +22,8 @@ set(BSP_DIR ${PROJECT_ROOT_DIR}/bsp)
 set(USER_DIR ${PROJECT_ROOT_DIR}/user)
 set(LIB_DIR ${PROJECT_ROOT_DIR}/Libraries)
 set(LD_DIR ${LIB_DIR}/ld)
+set(libx ${PROJECT_ROOT_DIR}/libx)
+set(app ${PROJECT_ROOT_DIR}/app)
 
 # 基本编译选项
 set(CMAKE_C_FLAGS "${MCU_FLAGS} -O2 -ffunction-sections -fdata-sections -Wall -g")
@@ -42,6 +44,8 @@ include_directories(
 
     ${USER_DIR}
     ${BSP_DIR}
+		${libx}
+		${app}
 )
 
 add_definitions(-DSTM32F103xx)
@@ -55,6 +59,8 @@ file(GLOB SRC_FILES
 
     ${USER_DIR}/*.c
     ${BSP_DIR}/*.c
+		${libx}/*.c
+		${app}/*.c
 )
 
 
