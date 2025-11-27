@@ -10,7 +10,7 @@
 
 #include "ERR.h"
 #include "__port_type__.h"
-#include "stm32f103x6.h"
+#include "stm32f103xb.h"
 
 /* 函数声明 */
 RESULT_Init bsp_gpio_Init(GPIO_TypeDef *GPIOx, u32 GPIOpin, u32 GPIOMode,

@@ -7,16 +7,20 @@
 
 /* 头文件引用 */
 #include "bsp_gpio.h"
+#include "stm32f103xb.h"
 #include "stm32f1xx_hal_gpio.h"
 #include "stm32f1xx_hal_rcc.h"
+#include "stm32f1xx_hal_rcc_ex.h"
 
 /**
  * @brief		gpio初始化函数
- * @param		gpio 			指定GPIO结构体
+ * @param		GPIOx 		指定GPIO组
+ * @param		GPIOpin		指定GPIO引脚
  * @param		GPIOMode	指定GPIO模式
  * @param		GPIOPull	指定GPIO上拉下拉
  * @param		GPIOSpeed	指定GPIO速度
  * @return	初始化结果
+ * @date		2025/11/24
  */
 RESULT_Init bsp_gpio_Init(GPIO_TypeDef *GPIOx, u32 GPIOpin, u32 GPIOMode,
                           u32 GPIOPull, u32 GPIOSpeed)
@@ -33,6 +37,8 @@ RESULT_Init bsp_gpio_Init(GPIO_TypeDef *GPIOx, u32 GPIOpin, u32 GPIOMode,
     __HAL_RCC_GPIOC_CLK_ENABLE();
   else if (GPIOx == GPIOD)
     __HAL_RCC_GPIOD_CLK_ENABLE();
+  else if (GPIOx == GPIOE)
+    __HAL_RCC_GPIOE_CLK_ENABLE();
 
   /* 配置 GPIO */
   GPIO_InitStruct.Pin = GPIOpin;

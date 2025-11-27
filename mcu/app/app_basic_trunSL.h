@@ -15,11 +15,11 @@
 /* 宏定义 */
 // clang-format off
 
-# ifdef APP_BASIC_TRUNSL_C			/* 用于.c文件的宏 */
-#define LEFT_PIN		GPIO_PIN_1	/* 左转灯GPIO引脚 */
-#define RIGHT_PIN		GPIO_PIN_2	/* 右转灯GPIO引脚 */
-#define LEFT_PROT		GPIOA				/* 左转灯GPIO分组 */
-#define RIGHT_PROT	GPIOA				/* 右转灯GPIO分组 */
+# ifdef __APP_BASIC_TRUNSL_C	/* 用于.c文件的宏 */
+#define LEFT_PIN			GPIO_PIN_1	/* 左转灯GPIO引脚 */
+#define RIGHT_PIN			GPIO_PIN_2	/* 右转灯GPIO引脚 */
+#define LEFT_GPIOx		GPIOA				/* 左转灯GPIO分组 */
+#define RIGHT_GPIOx		GPIOA				/* 右转灯GPIO分组 */
 #endif
 // clang-format on
 /* 函数声明 */

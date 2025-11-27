@@ -6,11 +6,10 @@
  * @date		2025/11/23
  **/
 
-#define APP_BASIC_TRUNSL_C
+#define __APP_BASIC_TRUNSL_C
 
 /* 头文件引用 */
 #include "app_basic_trunSL.h"
-#include "ERR.h"
 #include "bsp_gpio.h"
 #include "stm32f1xx_hal_gpio.h"
 
@@ -23,14 +22,14 @@ RESULT_Init app_trunSL_init()
 {
   RESULT_Init ret = ERR_Init_Start;
   /* 初始化左转灯 */
-  bsp_gpio_Init(LEFT_PROT, LEFT_PIN, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL,
+  bsp_gpio_Init(LEFT_GPIOx, LEFT_PIN, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL,
                 GPIO_SPEED_FREQ_LOW);
   /* 初始化右转灯 */
-  bsp_gpio_Init(RIGHT_PROT, RIGHT_PIN, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL,
+  bsp_gpio_Init(RIGHT_GPIOx, RIGHT_PIN, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL,
                 GPIO_SPEED_FREQ_LOW);
   /* 初始化关闭所有灯 */
-  HAL_GPIO_WritePin(LEFT_PROT, LEFT_PIN, GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(RIGHT_PROT, RIGHT_PIN, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(LEFT_GPIOx, LEFT_PIN, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(RIGHT_GPIOx, RIGHT_PIN, GPIO_PIN_RESET);
   ret = ERR_Init_Finished;
   return ret;
 }
@@ -42,8 +41,8 @@ RESULT_Init app_trunSL_init()
  **/
 RESULT_RUN app_trunSL_open_left()
 {
-  HAL_GPIO_WritePin(LEFT_PROT, LEFT_PIN, GPIO_PIN_SET);
-  if (HAL_GPIO_ReadPin(LEFT_PROT, LEFT_PIN) != GPIO_PIN_RESET)
+  HAL_GPIO_WritePin(LEFT_GPIOx, LEFT_PIN, GPIO_PIN_SET);
+  if (HAL_GPIO_ReadPin(LEFT_GPIOx, LEFT_PIN) != GPIO_PIN_RESET)
     return ERR_RUN_ERROR_UNST;
   return ERR_RUN_Finished;
 }
@@ -55,8 +54,8 @@ RESULT_RUN app_trunSL_open_left()
  **/
 RESULT_RUN app_trunSL_open_right()
 {
-  HAL_GPIO_WritePin(RIGHT_PROT, RIGHT_PIN, GPIO_PIN_SET);
-  if (HAL_GPIO_ReadPin(RIGHT_PROT, RIGHT_PIN) != GPIO_PIN_RESET)
+  HAL_GPIO_WritePin(RIGHT_GPIOx, RIGHT_PIN, GPIO_PIN_SET);
+  if (HAL_GPIO_ReadPin(RIGHT_GPIOx, RIGHT_PIN) != GPIO_PIN_RESET)
     return ERR_RUN_ERROR_UNST;
   return ERR_RUN_Finished;
 }
