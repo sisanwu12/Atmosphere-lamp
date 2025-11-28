@@ -26,6 +26,8 @@ int main(void)
 {
   app_trunSL_init();
 
+  app_trunSL_open_left();
+  app_trunSL_open_right();
   /* 主逻辑 */
   MAIN_LOOP();
 }

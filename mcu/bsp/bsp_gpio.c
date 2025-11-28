@@ -52,7 +52,7 @@ RESULT_Init bsp_gpio_Init(GPIO_TypeDef *GPIOx, u32 GPIOpin, u32 GPIOMode,
   GPIO_InitStruct.Mode = GPIOMode;
   GPIO_InitStruct.Pull = GPIOPull;
   GPIO_InitStruct.Speed = GPIOSpeed;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOx, &GPIO_InitStruct);
 
   ret = ERR_Init_Finished;
   return ret;

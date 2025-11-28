@@ -24,5 +24,7 @@
 // clang-format on
 /* 函数声明 */
 RESULT_Init app_trunSL_init();
+RESULT_RUN app_trunSL_open_left();
+RESULT_RUN app_trunSL_open_right();
 
 #endif

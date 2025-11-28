@@ -43,7 +43,7 @@
                 "-f",
                 "target/stm32f1x.cfg",
                 "-c",
-                "program /mcu/build/ATMOSPHERE_LAMP.elf verify reset exit"
+                "program mcu/build/ATMOSPHERE_LAMP.elf verify reset exit"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
