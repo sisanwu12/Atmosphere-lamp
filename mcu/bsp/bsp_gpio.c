@@ -13,6 +13,23 @@
 #include "stm32f1xx_hal_rcc_ex.h"
 
 /**
+ * @brief		GPIO时钟使能函数
+ */
+static inline void bsp_rcc_enable(GPIO_TypeDef *GPIOx)
+{
+  if (GPIOx == GPIOA)
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+  else if (GPIOx == GPIOB)
+    __HAL_RCC_GPIOB_CLK_ENABLE();
+  else if (GPIOx == GPIOC)
+    __HAL_RCC_GPIOC_CLK_ENABLE();
+  else if (GPIOx == GPIOD)
+    __HAL_RCC_GPIOD_CLK_ENABLE();
+  else if (GPIOx == GPIOE)
+    __HAL_RCC_GPIOE_CLK_ENABLE();
+}
+
+/**
  * @brief		gpio初始化函数
  * @param		GPIOx 		指定GPIO组
  * @param		GPIOpin		指定GPIO引脚
@@ -29,17 +46,7 @@ RESULT_Init bsp_gpio_Init(GPIO_TypeDef *GPIOx, u32 GPIOpin, u32 GPIOMode,
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* 使能 GPIO 时钟 */
-  if (GPIOx == GPIOA)
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-  else if (GPIOx == GPIOB)
-    __HAL_RCC_GPIOB_CLK_ENABLE();
-  else if (GPIOx == GPIOC)
-    __HAL_RCC_GPIOC_CLK_ENABLE();
-  else if (GPIOx == GPIOD)
-    __HAL_RCC_GPIOD_CLK_ENABLE();
-  else if (GPIOx == GPIOE)
-    __HAL_RCC_GPIOE_CLK_ENABLE();
-
+  bsp_rcc_enable(GPIOx);
   /* 配置 GPIO */
   GPIO_InitStruct.Pin = GPIOpin;
   GPIO_InitStruct.Mode = GPIOMode;
