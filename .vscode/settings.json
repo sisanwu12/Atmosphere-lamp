@@ -9,8 +9,8 @@
         "--completion-style=detailed"
     ],
     "cmake.configureOnOpen": false,
-    "cmake.buildDirectory": "${workspaceFolder}/mcu/build",
-    "cmake.sourceDirectory": "${workspaceFolder}/mcu/project",
+    "cmake.buildDirectory": "${workspaceFolder}/build",
+    "cmake.sourceDirectory": "${workspaceFolder}/project",
     "cmake.generator": "Ninja",
     "cmake.configureArgs": [
         "-DCMAKE_SYSTEM_NAME=Generic"

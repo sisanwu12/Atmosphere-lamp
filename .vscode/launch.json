@@ -2,7 +2,7 @@
     "configurations": [
         {
             "cwd": "${workspaceRoot}",
-            "executable": "./mcu/build/ATMOSPHERE_LAMP.elf",
+            "executable": "./build/ATMOSPHERE_LAMP.elf",
             "device": "STM32F103C8T6",
             "name": "Debug with OpenOCD",
             "request": "launch",
