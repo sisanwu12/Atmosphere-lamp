@@ -6,6 +6,7 @@
 /* 头文件引用 */
 #include "FreeRTOS.h"
 #include "app_basic_trunSL.h"
+#include "app_gonio.h"
 #include "task.h"
 
 /**
@@ -50,6 +51,7 @@ int main(void)
 {
   HAL_Init();
   app_trunSL_init();
+  app_gonio_init();
 
   xTaskCreate(Task_LLED, "LLED", 128, NULL, 1, NULL);
 

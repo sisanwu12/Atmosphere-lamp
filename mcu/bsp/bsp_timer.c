@@ -14,6 +14,30 @@
 #include "stm32f1xx_hal_tim.h"
 
 /**
+ * @brief		定时器时钟使能函数
+ * @param		timx	指定定时器
+ * @date		2025/12/4
+ */
+static inline void bsp_timer_rcc_enable(TIM_TypeDef *timx)
+{
+  switch ((u32)timx)
+  {
+  case (u32)TIM1:
+    __HAL_RCC_TIM1_CLK_ENABLE();
+    break;
+  case (u32)TIM2:
+    __HAL_RCC_TIM2_CLK_ENABLE();
+    break;
+  case (u32)TIM3:
+    __HAL_RCC_TIM3_CLK_ENABLE();
+    break;
+  case (u32)TIM4:
+    __HAL_RCC_TIM4_CLK_ENABLE();
+    break;
+  }
+}
+
+/**
  * @brief 	timer定时器初始化函数
  * @param		htim
  *	传入定时器结构体指针
@@ -35,16 +59,10 @@ RESULT_Init bsp_timer_init(TIM_HandleTypeDef *htim, TIM_TypeDef *timx,
                            u32 RepetitionCounter)
 {
   RESULT_Init ret = ERR_Init_Start;
-  if (timx == TIM1)
-    __HAL_RCC_TIM1_CLK_ENABLE();
-  else if (timx == TIM2)
-    __HAL_RCC_TIM2_CLK_ENABLE();
-  else if (timx == TIM3)
-    __HAL_RCC_TIM3_CLK_ENABLE();
-  else if (timx == TIM4)
-    __HAL_RCC_TIM4_CLK_ENABLE();
-  htim->Instance = timx;
+  /* 定时器时钟使能 */
+  bsp_timer_rcc_enable(timx);
 
+  htim->Instance = timx;
   htim->Init.Prescaler = Prescaler;
   htim->Init.CounterMode = CounterMode;
   htim->Init.Period = Period;
