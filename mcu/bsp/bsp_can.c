@@ -1,116 +1,110 @@
-#include "bsp_can.h"
-#include "blockbuffer.h"
-#include "bsp_usart.h"
-#include <stdio.h>
+// #include "bsp_can.h"
+// #include "bsp_usart.h"
+// #include <stdio.h>
 
-void* can_rb = NULL;
-CAN_HandleTypeDef hcan1;
+// void *can_rb = NULL;
+// CAN_HandleTypeDef hcan1;
 
-// GPIOÅäÖÃ
-void can_gpio_config(void)
-{
-    GPIO_InitTypeDef GPIO_InitStruct = {0};
+// // GPIOï¿½ï¿½ï¿½ï¿½
+// void can_gpio_config(void)
+// {
+//   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-    __HAL_RCC_GPIOB_CLK_ENABLE();
+//   __HAL_RCC_GPIOB_CLK_ENABLE();
 
-    // TXÒý½Å
-    GPIO_InitStruct.Pin = CAN_TX_PIN;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_PULLUP;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-    GPIO_InitStruct.Alternate = CAN_TX_AF;
-    HAL_GPIO_Init(CAN_TX_PORT, &GPIO_InitStruct);
+//   // TXï¿½ï¿½ï¿½ï¿½
+//   GPIO_InitStruct.Pin = CAN_TX_PIN;
+//   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+//   GPIO_InitStruct.Pull = GPIO_PULLUP;
+//   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+//   HAL_GPIO_Init(CAN_TX_PORT, &GPIO_InitStruct);
 
-    // RXÒý½Å
-    GPIO_InitStruct.Pin = CAN_RX_PIN;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_PULLUP;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-    GPIO_InitStruct.Alternate = CAN_RX_AF;
-    HAL_GPIO_Init(CAN_RX_PORT, &GPIO_InitStruct);
-}
+//   // RXï¿½ï¿½ï¿½ï¿½
+//   GPIO_InitStruct.Pin = CAN_RX_PIN;
+//   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+//   GPIO_InitStruct.Pull = GPIO_PULLUP;
+//   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+//   HAL_GPIO_Init(CAN_RX_PORT, &GPIO_InitStruct);
+// }
 
-// CANÄ£Ê½ÅäÖÃ
-void can_mode_config(void)
-{
-    __HAL_RCC_CAN1_CLK_ENABLE();
-    
-    hcan1.Instance = CAN1;
-    hcan1.Init.TimeTriggeredMode = DISABLE;
-    hcan1.Init.AutoBusOff = ENABLE;
-    hcan1.Init.AutoWakeUp = ENABLE;
-    hcan1.Init.AutoRetransmission = ENABLE;
-    hcan1.Init.ReceiveFifoLocked = DISABLE;
-    hcan1.Init.TransmitFifoPriority = DISABLE;
-    
-    // »Ø»·Ä£Ê½£¨×Ô·¢×ÔÊÕ²âÊÔ£©
-    hcan1.Init.Mode = CAN_MODE_LOOPBACK;
-    hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
-    hcan1.Init.TimeSeg1 = CAN_BS1_5TQ;
-    hcan1.Init.TimeSeg2 = CAN_BS2_2TQ;
-    hcan1.Init.Prescaler = 2;
-		
-    if (HAL_CAN_Init(&hcan1) != HAL_OK)
-    {
-        printf("CAN Init failed\n");
-    }
-}
+// // CANÄ£Ê½ï¿½ï¿½ï¿½ï¿½
+// void can_mode_config(void)
+// {
+//   __HAL_RCC_CAN1_CLK_ENABLE();
 
-// CAN¹ýÂËÆ÷ÅäÖÃ
-static void can_filter_config(void)
-{
-    CAN_FilterTypeDef sFilterConfig;
+//   hcan1.Instance = CAN1;
+//   hcan1.Init.TimeTriggeredMode = DISABLE;
+//   hcan1.Init.AutoBusOff = ENABLE;
+//   hcan1.Init.AutoWakeUp = ENABLE;
+//   hcan1.Init.AutoRetransmission = ENABLE;
+//   hcan1.Init.ReceiveFifoLocked = DISABLE;
+//   hcan1.Init.TransmitFifoPriority = DISABLE;
 
-    // ¹ýÂËÆ÷0£º¶¯Á¦Óò (0x0000-0x00FF)
-    sFilterConfig.FilterBank = 0;
-    sFilterConfig.FilterMode = CAN_FILTERMODE_IDMASK;
-    sFilterConfig.FilterScale = CAN_FILTERSCALE_32BIT;
-    sFilterConfig.FilterIdHigh = 0x0000 << 5;
-    sFilterConfig.FilterIdLow = 0x0000;
-    sFilterConfig.FilterMaskIdHigh = 0x0F80;
-    sFilterConfig.FilterMaskIdLow = 0x0000;
-    sFilterConfig.FilterFIFOAssignment = CAN_FILTER_FIFO0;
-    sFilterConfig.FilterActivation = ENABLE;
-    HAL_CAN_ConfigFilter(&hcan1, &sFilterConfig);
-    
-    // ¹ýÂËÆ÷1£ºµ×ÅÌÓë°²È«Óò (0x0100-0x01FF)
-    sFilterConfig.FilterBank = 1;
-    sFilterConfig.FilterIdHigh = 0x0100 << 5;
-    sFilterConfig.FilterIdLow = 0x0000;
-    sFilterConfig.FilterMaskIdHigh = 0x0F80;  
-    sFilterConfig.FilterMaskIdLow = 0x0000;
-    HAL_CAN_ConfigFilter(&hcan1, &sFilterConfig);
-    
-    // ¹ýÂËÆ÷2£º³µÉíÓò (0x0200-0x02FF)
-    sFilterConfig.FilterBank = 2;
-    sFilterConfig.FilterIdHigh = 0x0200 << 5; 
-    sFilterConfig.FilterIdLow = 0x0000;
-    sFilterConfig.FilterMaskIdHigh = 0x0F80; 
-    HAL_CAN_ConfigFilter(&hcan1, &sFilterConfig);
-    
-    // ¹ýÂËÆ÷3£ºÐÅÏ¢ÓéÀÖÓò (0x0300-0x03FF)
-    sFilterConfig.FilterBank = 3;
-    sFilterConfig.FilterIdHigh = 0x0300 << 5;  
-    sFilterConfig.FilterIdLow = 0x0000;
-    sFilterConfig.FilterMaskIdHigh = 0x0F80;     
-    HAL_CAN_ConfigFilter(&hcan1, &sFilterConfig);
+//   // ï¿½Ø»ï¿½Ä£Ê½ï¿½ï¿½ï¿½Ô·ï¿½ï¿½ï¿½ï¿½Õ²ï¿½ï¿½Ô£ï¿½
+//   hcan1.Init.Mode = CAN_MODE_LOOPBACK;
+//   hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
+//   hcan1.Init.TimeSeg1 = CAN_BS1_5TQ;
+//   hcan1.Init.TimeSeg2 = CAN_BS2_2TQ;
+//   hcan1.Init.Prescaler = 2;
 
-    printf("CAN¹ýÂËÆ÷ÅäÖÃÍê³É£º°´Óò·¶Î§¹ýÂË\r\n");
-}
+//   if (HAL_CAN_Init(&hcan1) != HAL_OK)
+//   {
+//     printf("CAN Init failed\n");
+//   }
+// }
 
-// CAN³õÊ¼»¯
-void can_init(void)
-{   
-    can_gpio_config();
-    can_mode_config();
-    can_filter_config();
-    
-    HAL_CAN_Start(&hcan1);
-    HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
-}
+// // CANï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+// static void can_filter_config(void)
+// {
+//   CAN_FilterTypeDef sFilterConfig;
 
-// ÖÐ¶Ï·þÎñº¯Êý
-void CAN1_RX0_IRQHandler(void)
-{
-    HAL_CAN_IRQHandler(&hcan1);
-}
+//   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ (0x0000-0x00FF)
+//   sFilterConfig.FilterBank = 0;
+//   sFilterConfig.FilterMode = CAN_FILTERMODE_IDMASK;
+//   sFilterConfig.FilterScale = CAN_FILTERSCALE_32BIT;
+//   sFilterConfig.FilterIdHigh = 0x0000 << 5;
+//   sFilterConfig.FilterIdLow = 0x0000;
+//   sFilterConfig.FilterMaskIdHigh = 0x0F80;
+//   sFilterConfig.FilterMaskIdLow = 0x0000;
+//   sFilterConfig.FilterFIFOAssignment = CAN_FILTER_FIFO0;
+//   sFilterConfig.FilterActivation = ENABLE;
+//   HAL_CAN_ConfigFilter(&hcan1, &sFilterConfig);
+
+//   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ë°²È«ï¿½ï¿½ (0x0100-0x01FF)
+//   sFilterConfig.FilterBank = 1;
+//   sFilterConfig.FilterIdHigh = 0x0100 << 5;
+//   sFilterConfig.FilterIdLow = 0x0000;
+//   sFilterConfig.FilterMaskIdHigh = 0x0F80;
+//   sFilterConfig.FilterMaskIdLow = 0x0000;
+//   HAL_CAN_ConfigFilter(&hcan1, &sFilterConfig);
+
+//   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½2ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ (0x0200-0x02FF)
+//   sFilterConfig.FilterBank = 2;
+//   sFilterConfig.FilterIdHigh = 0x0200 << 5;
+//   sFilterConfig.FilterIdLow = 0x0000;
+//   sFilterConfig.FilterMaskIdHigh = 0x0F80;
+//   HAL_CAN_ConfigFilter(&hcan1, &sFilterConfig);
+
+//   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½3ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ (0x0300-0x03FF)
+//   sFilterConfig.FilterBank = 3;
+//   sFilterConfig.FilterIdHigh = 0x0300 << 5;
+//   sFilterConfig.FilterIdLow = 0x0000;
+//   sFilterConfig.FilterMaskIdHigh = 0x0F80;
+//   HAL_CAN_ConfigFilter(&hcan1, &sFilterConfig);
+
+//   printf("CANï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É£ï¿½ï¿½ï¿½ï¿½ï¿½Î§ï¿½ï¿½ï¿½ï¿½\r\n");
+// }
+
+// // CANï¿½ï¿½Ê¼ï¿½ï¿½
+// void can_init(void)
+// {
+//   can_gpio_config();
+//   can_mode_config();
+//   can_filter_config();
+
+//   HAL_CAN_Start(&hcan1);
+//   HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
+// }
+
+// // ï¿½Ð¶Ï·ï¿½ï¿½ï¿½ï¿½ï¿½
+// void CAN1_RX0_IRQHandler(void) { HAL_CAN_IRQHandler(&hcan1); }

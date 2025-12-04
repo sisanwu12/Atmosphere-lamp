@@ -635,7 +635,7 @@ typedef osword_t (*__subclass_callback__)(void *, void *, osword_t, osword_t *);
 
 // 求成员element相对与结构体stru_name的偏移量（在这个结构体当中的位置），(struct
 // stru_name*)0)将结构体的地址变为从零开始，这样就可以求出一个成员的偏移量
-#define offsetof(type, member) ((osword_t)(&((type *)0)->member))
+// #define offsetof(type, member) ((osword_t)(&((type *)0)->member))
 #define has_member(type, member)                                               \
   ((offsetof(type, member) != (osword_t)(-1)) ? 1 : 0)
 
