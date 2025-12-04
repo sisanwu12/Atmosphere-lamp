@@ -26,6 +26,8 @@ void Task_LLED(void *pvParameters)
   {
     app_trunSL_open_left();
     vTaskDelay(500);
+    app_trunSL_close_left();
+    vTaskDelay(500);
   }
 }
 
@@ -34,6 +36,8 @@ void Task_RLED(void *pvParameters)
   while (1)
   {
     app_trunSL_open_right();
+    vTaskDelay(200);
+    app_trunSL_close_right();
     vTaskDelay(200);
   }
 }
@@ -44,11 +48,12 @@ void Task_RLED(void *pvParameters)
  **/
 int main(void)
 {
+  HAL_Init();
   app_trunSL_init();
 
   xTaskCreate(Task_LLED, "LLED", 128, NULL, 1, NULL);
 
-  xTaskCreate(Task_RLED, "ELED", 128, NULL, 1, NULL);
+  xTaskCreate(Task_RLED, "RLED", 128, NULL, 1, NULL);
 
   vTaskStartScheduler();
   /* 主逻辑 */

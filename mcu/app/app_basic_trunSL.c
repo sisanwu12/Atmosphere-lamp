@@ -37,25 +37,43 @@ RESULT_Init app_trunSL_init()
 /**
  * @brief		打开左转向灯
  * @return	是否成功打开
- * @date		2025/11/23
+ * @date		2025/12/4
  **/
 RESULT_RUN app_trunSL_open_left()
 {
   HAL_GPIO_WritePin(LEFT_GPIOx, LEFT_PIN, GPIO_PIN_SET);
-  if (HAL_GPIO_ReadPin(LEFT_GPIOx, LEFT_PIN) != GPIO_PIN_RESET)
-    return ERR_RUN_ERROR_UNST;
   return ERR_RUN_Finished;
 }
 
 /**
  * @brief		打开右转向灯
  * @return	是否成功打开
- * @date		2025/11/23
+ * @date		2025/12/4
  **/
 RESULT_RUN app_trunSL_open_right()
 {
   HAL_GPIO_WritePin(RIGHT_GPIOx, RIGHT_PIN, GPIO_PIN_SET);
-  if (HAL_GPIO_ReadPin(RIGHT_GPIOx, RIGHT_PIN) != GPIO_PIN_RESET)
-    return ERR_RUN_ERROR_UNST;
+  return ERR_RUN_Finished;
+}
+
+/**
+ * @brief		关闭左转向灯
+ * @return	是否成功关闭
+ * @date		2025/12/4
+ **/
+RESULT_RUN app_trunSL_close_left()
+{
+  HAL_GPIO_WritePin(LEFT_GPIOx, LEFT_PIN, GPIO_PIN_RESET);
+  return ERR_RUN_Finished;
+}
+
+/**
+ * @brief		关闭右转向灯
+ * @return	是否成功关闭
+ * @date		2025/12/4
+ **/
+RESULT_RUN app_trunSL_close_right()
+{
+  HAL_GPIO_WritePin(LEFT_GPIOx, RIGHT_PIN, GPIO_PIN_RESET);
   return ERR_RUN_Finished;
 }

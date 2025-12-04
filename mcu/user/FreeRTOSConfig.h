@@ -9,10 +9,11 @@
 
 #define INCLUDE_vTaskDelay 1
 #define configUSE_PREEMPTION 1
+#define configUSE_TICKLESS_IDLE 0
 #define configUSE_IDLE_HOOK 0
 #define configUSE_TICK_HOOK 0
 
-#define configUSE_16_BIT_TICKS 1
+#define configUSE_16_BIT_TICKS 0
 
 #define configMAX_PRIORITIES 5
 #define configMINIMAL_STACK_SIZE 128
