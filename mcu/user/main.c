@@ -20,29 +20,6 @@ void MAIN_LOOP()
   {
   }
 }
-
-void Task_LLED(void *pvParameters)
-{
-  while (1)
-  {
-    app_trunSL_open_left();
-    vTaskDelay(500);
-    app_trunSL_close_left();
-    vTaskDelay(500);
-  }
-}
-
-void Task_RLED(void *pvParameters)
-{
-  while (1)
-  {
-    app_trunSL_open_right();
-    vTaskDelay(200);
-    app_trunSL_close_right();
-    vTaskDelay(200);
-  }
-}
-
 /**
  * @brief		主函数
  * @date		2025-11-24
@@ -53,9 +30,9 @@ int main(void)
   app_trunSL_init();
   app_gonio_init();
 
-  xTaskCreate(Task_LLED, "LLED", 128, NULL, 1, NULL);
+  // xTaskCreate(Task_LLED, "LLED", 128, NULL, 1, NULL);
 
-  xTaskCreate(Task_RLED, "RLED", 128, NULL, 1, NULL);
+  // xTaskCreate(Task_RLED, "RLED", 128, NULL, 1, NULL);
 
   vTaskStartScheduler();
   /* 主逻辑 */
