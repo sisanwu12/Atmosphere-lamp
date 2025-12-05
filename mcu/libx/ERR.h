@@ -21,6 +21,7 @@ typedef enum RESULT_Init
 	ERR_Init_ERROR_PWM		= 0x13U,
 	ERR_Init_ERROR_SPI		= 0x14U,
 	ERR_Init_ERROR_ADC		= 0x15U,
+	ERR_Init_ERROR_DMA    = 0x16U,
 	
 } RESULT_Init;
 

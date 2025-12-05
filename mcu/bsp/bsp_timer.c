@@ -53,10 +53,10 @@ static inline void bsp_timer_rcc_enable(TIM_TypeDef *timx)
  * @return	初始化的结果
  * @date		2025/11/24
  **/
-RESULT_Init bsp_timer_init(TIM_HandleTypeDef *htim, TIM_TypeDef *timx,
-                           u32 Prescaler, u32 CounterMode, u32 Period,
-                           u32 ClockDivision, u32 AutoReloadPreload,
-                           u32 RepetitionCounter)
+RESULT_Init bsp_timer_SetStruct(TIM_HandleTypeDef *htim, TIM_TypeDef *timx,
+                                u32 Prescaler, u32 CounterMode, u32 Period,
+                                u32 ClockDivision, u32 AutoReloadPreload,
+                                u32 RepetitionCounter)
 {
   RESULT_Init ret = ERR_Init_Start;
   /* 定时器时钟使能 */
@@ -73,10 +73,70 @@ RESULT_Init bsp_timer_init(TIM_HandleTypeDef *htim, TIM_TypeDef *timx,
   else
     htim->Init.RepetitionCounter = 0;
 
-  ret = HAL_TIM_IC_Init(htim) ? ERR_Init_ERROR_TIM : ERR_Init_Finished;
-  if (ret)
-    return ret;
-
   ret = ERR_Init_Finished;
   return ret;
+}
+
+/**
+ * @brief   PWM模式定时器初始化函数
+ * @param   htim    传入定时器结构体
+ * @param   OCMode  指定输出比较模式
+ * @note
+ * TIM_OCMODE_PWM1：计数器 < CCR 时输出有效电平
+ * TIM_OCMODE_PWM2：计数器 < CCR 时输出无效电平
+ *
+ * @param   Pulse   指定脉冲宽度（占空比）
+ * @note
+ * 实际写入的是CCRx的值。
+ * 周期由 ARR 定义，占空比 = Pulse / (ARR + 1)。
+ *
+ * @param   OCPolarity  指定主输出极性
+ * @note
+ * TIM_OCPOLARITY_HIGH：有效电平 = 高电平
+ * TIM_OCPOLARITY_LOW： 有效电平 = 低电平
+ *
+ * @param   OCFastMode  指定是否开启快速模式
+ * @note
+ * TIM_OCFAST_DISABLE：禁用快速模式（常用）
+ * TIM_OCFAST_ENABLE： 启用快速模式
+ *
+ * @param   OCIdleState 指定主输出空闲状态
+ * @note
+ * TIM_OCIDLESTATE_RESET：空闲时输出低电平
+ * TIM_OCIDLESTATE_SET：  空闲时输出高电平
+ *
+ * @param   OCNIdleState  指定互补输出空闲状态
+ * @note
+ * 同 OCIdleState，该相是给高级定时器的互补输出配置的
+ *
+ * @param   OCNPolarity   指定互补输出极性
+ * @note
+ * 同样是给高级定时器的互补输出配置的
+ *
+ * @param   Channel   指定输出通道
+ */
+RESULT_Init bsp_timer_PWM_init(TIM_HandleTypeDef *htim, u32 OCMode, u32 Pulse,
+                               u32 OCPolarity, u32 OCFastMode, u32 OCIdleState,
+                               u32 OCNIdleState, u32 OCNPolarity, u32 Channel)
+{
+  TIM_OC_InitTypeDef sConfigOC = {0};
+  sConfigOC.OCMode = OCMode;
+  sConfigOC.Pulse = Pulse;
+  sConfigOC.OCPolarity = OCPolarity;
+  sConfigOC.OCFastMode = OCFastMode;
+  sConfigOC.OCIdleState = OCIdleState;
+  if (htim->Instance == TIM1)
+  {
+    sConfigOC.OCNIdleState = OCNIdleState;
+    sConfigOC.OCNPolarity = OCNPolarity;
+  }
+
+  if (HAL_TIM_PWM_Init(htim) != HAL_OK)
+    return ERR_Init_ERROR_TIM;
+  if (HAL_TIM_PWM_ConfigChannel(htim, &sConfigOC, Channel) != HAL_OK)
+    return ERR_Init_ERROR_TIM;
+  if (HAL_TIM_PWM_Start(htim, Channel) != HAL_OK)
+    return ERR_Init_ERROR_TIM;
+
+  return ERR_Init_Finished;
 }

@@ -11,6 +11,16 @@
 #include "stdio.h"
 #include "task.h"
 
+void Task_Angle(void *arg)
+{
+  for (;;)
+  {
+    uint16_t ang = app_gonio_GetAngle();
+    printf("Angle: %d°\r\n", ang);
+    vTaskDelay(pdMS_TO_TICKS(1000));
+  }
+}
+
 /**
  * @brief		主函数
  * @date		2025/12/4
@@ -24,7 +34,7 @@ int main(void)
 
   printf("all is init\r\n");
 
-  while (1)
-    ;
-  // vTaskStartScheduler();
+  xTaskCreate(Task_Angle, "Angle", 128, NULL, 2, NULL);
+
+  vTaskStartScheduler();
 }
