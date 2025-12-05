@@ -21,13 +21,11 @@
 #define GONIO_PIN			GPIO_PIN_6		/* 指定GPIO引脚 */
 #define GONIO_GPIOx		GPIOA					/* 指定GPIO分组 */
 #define GONIO_TIMx		TIM3					/* 指定定时器 */
-#define GONIO_DMA_CH1	DMA1_Channel6	/* 指定DMA通道1 */
-#define GONIO_DMA_CH2	DMA1_Channel7	/* 指定DMA通道2 */
 
 #endif
 // clang-format on
 /* 函数声明 */
 RESULT_Init app_gonio_init();
-u16 app_gonio_GetAngle(void);
+float app_gonio_GetAngleDeg(void);
 
 #endif

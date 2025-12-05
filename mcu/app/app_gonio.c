@@ -13,17 +13,17 @@
 #include "bsp_dma.h"
 #include "bsp_gpio.h"
 #include "bsp_timer.h"
+#include "stm32f1xx_hal_cortex.h"
 #include "stm32f1xx_hal_gpio.h"
 #include "stm32f1xx_hal_tim.h"
 
 /* 静态全局变量 */
 static TIM_HandleTypeDef APP_GONIO_TIM = {0};
-DMA_HandleTypeDef APP_GONIO_ch1 = {0};
-DMA_HandleTypeDef APP_GONIO_ch2 = {0};
-/* PWM 周期 */
-static volatile u16 APP_GONIO_PERIOD = 0;
-/* PWM 高电平 */
-static volatile u16 APP_GONIO_PULSE = 0;
+
+static volatile u32 riseTime = 0;
+static volatile u32 fallTime = 0;
+static volatile u32 pulseWidth = 0; // us
+static volatile u32 newData = 0;    // 标记是否有新数据
 
 /**
  * @brief		角度测量模块初始化函数
@@ -44,58 +44,70 @@ RESULT_Init app_gonio_init()
                       TIM_AUTORELOAD_PRELOAD_DISABLE, 0);
 
   HAL_TIM_PWM_Init(&APP_GONIO_TIM);
+
   // 输入捕获配置
-  TIM_IC_InitTypeDef sConfigIC = {0};
-  sConfigIC.ICPolarity = TIM_ICPOLARITY_RISING; // CH1: 周期
-  sConfigIC.ICSelection = TIM_ICSELECTION_DIRECTTI;
-  sConfigIC.ICPrescaler = TIM_ICPSC_DIV1;
-  sConfigIC.ICFilter = 0;
+  TIM_IC_InitTypeDef sConfig = {0};
+  // CH1: 上升沿捕获
+  sConfig.ICPolarity = TIM_INPUTCHANNELPOLARITY_RISING;
+  sConfig.ICSelection = TIM_ICSELECTION_DIRECTTI;
+  sConfig.ICPrescaler = TIM_ICPSC_DIV1;
+  sConfig.ICFilter = 0;
+  HAL_TIM_IC_ConfigChannel(&APP_GONIO_TIM, &sConfig, TIM_CHANNEL_1);
 
-  HAL_TIM_IC_ConfigChannel(&APP_GONIO_TIM, &sConfigIC, TIM_CHANNEL_1);
+  // CH2: 下降沿捕获
+  sConfig.ICPolarity = TIM_INPUTCHANNELPOLARITY_FALLING;
+  HAL_TIM_IC_ConfigChannel(&APP_GONIO_TIM, &sConfig, TIM_CHANNEL_2);
 
-  sConfigIC.ICPolarity = TIM_ICPOLARITY_FALLING; // CH2: 脉宽
-  HAL_TIM_IC_ConfigChannel(&APP_GONIO_TIM, &sConfigIC, TIM_CHANNEL_2);
+  HAL_NVIC_SetPriority(TIM3_IRQn, 2, 0);
+  HAL_NVIC_EnableIRQ(TIM3_IRQn);
 
-  // 从模式触发（经典 PWM Input）
-  TIM_SlaveConfigTypeDef slave = {0};
-  slave.SlaveMode = TIM_SLAVEMODE_RESET;
-  slave.InputTrigger = TIM_TS_TI1FP1;
-  HAL_TIM_SlaveConfigSynchro(&APP_GONIO_TIM, &slave);
-
-  /* 配置DMA */
-  DMA_Init_Config cfg = bsp_dma_conf_PWM(GONIO_DMA_CH1);
-  bsp_dma_init(&APP_GONIO_ch1, &cfg);
-  __HAL_LINKDMA(&APP_GONIO_TIM, hdma[TIM_DMA_ID_CC1], APP_GONIO_ch1);
-  cfg = bsp_dma_conf_PWM(GONIO_DMA_CH2);
-  bsp_dma_init(&APP_GONIO_ch2, &cfg);
-  __HAL_LINKDMA(&APP_GONIO_TIM, hdma[TIM_DMA_ID_CC2], APP_GONIO_ch2);
-
-  // 启动 DMA
-  HAL_DMA_Start(&APP_GONIO_ch1, (uint32_t)&TIM3->CCR1,
-                (uint32_t)&APP_GONIO_PERIOD, 1);
-  HAL_DMA_Start(&APP_GONIO_ch2, (uint32_t)&TIM3->CCR2,
-                (uint32_t)&APP_GONIO_PULSE, 1);
-
-  // 启动输入捕获 + DMA
-  HAL_TIM_IC_Start_DMA(&APP_GONIO_TIM, TIM_CHANNEL_1,
-                       (uint32_t *)&APP_GONIO_PERIOD, 1);
-  HAL_TIM_IC_Start_DMA(&APP_GONIO_TIM, TIM_CHANNEL_2,
-                       (uint32_t *)&APP_GONIO_PULSE, 1);
+  HAL_TIM_IC_Start_IT(&APP_GONIO_TIM, TIM_CHANNEL_1);
+  HAL_TIM_IC_Start_IT(&APP_GONIO_TIM, TIM_CHANNEL_2);
 
   ret = ERR_Init_Finished;
   return ret;
 }
 
-u16 app_gonio_GetAngle(void)
+float app_gonio_GetAngleDeg(void)
 {
-  u16 p = APP_GONIO_PERIOD;
-  u16 h = APP_GONIO_PULSE;
+  if (!newData)
+    return -1; // 没有新数据
+  newData = 0;
 
-  if (p == 0)
-    return 0;
+  const float period_us = 2000.0f; // AS5048A PWM 周期固定 2ms
 
-  float duty = (float)h / (float)p;
-  float angle = duty * 360.0f;
+  float angle = ((float)pulseWidth / period_us) * 360.0f;
 
-  return (u16)angle;
+  // AS5048A 12bit 0–4095，范围必须在 0–360
+  if (angle < 0)
+    angle = 0;
+  if (angle > 360)
+    angle = 360;
+
+  return angle;
+}
+
+void TIM3_IRQHandler(void) { HAL_TIM_IRQHandler(&APP_GONIO_TIM); }
+
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
+{
+  if (htim->Instance != TIM3)
+    return;
+  if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1)
+  {
+    // 上升沿：记录开始时间
+    riseTime = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
+  }
+  else if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_2)
+  {
+    // 下降沿：记录结束时间
+    fallTime = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2);
+
+    if (fallTime >= riseTime)
+      pulseWidth = fallTime - riseTime;
+    else
+      pulseWidth = (0xFFFF - riseTime) + fallTime;
+
+    newData = 1;
+  }
 }

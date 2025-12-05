@@ -15,9 +15,13 @@ void Task_Angle(void *arg)
 {
   for (;;)
   {
-    uint16_t ang = app_gonio_GetAngle();
-    printf("Angle: %d°\r\n", ang);
-    vTaskDelay(pdMS_TO_TICKS(1000));
+    float angle = app_gonio_GetAngleDeg();
+    if (angle >= 0)
+    {
+      printf("Angle = %.2f deg\r\n", angle);
+    }
+
+    vTaskDelay(pdMS_TO_TICKS(1000)); // 10Hz 采样
   }
 }
 
@@ -28,13 +32,16 @@ void Task_Angle(void *arg)
 int main(void)
 {
   HAL_Init();
-  app_trunSL_init();
-  app_gonio_init();
   app_debug_init();
-
-  printf("all is init\r\n");
+  printf("Debug\r\n");
+  app_trunSL_init();
+  printf("TRUNSL\r\n");
+  app_gonio_init();
+  printf("gonio\r\n");
 
   xTaskCreate(Task_Angle, "Angle", 128, NULL, 2, NULL);
 
   vTaskStartScheduler();
+  while (1)
+    ;
 }
