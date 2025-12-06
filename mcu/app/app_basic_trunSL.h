@@ -17,8 +17,8 @@
 #ifdef __APP_BASIC_TRUNSL_C /* 用于.c文件的宏 */
 // clang-format off
 
-#define LEFT_PIN			GPIO_PIN_1	/* 左转灯GPIO引脚 */
-#define RIGHT_PIN			GPIO_PIN_2	/* 右转灯GPIO引脚 */
+#define LEFT_PIN			GPIO_PIN_2	/* 左转灯GPIO引脚 */
+#define RIGHT_PIN			GPIO_PIN_1	/* 右转灯GPIO引脚 */
 #define LEFT_GPIOx		GPIOA				/* 左转灯GPIO分组 */
 #define RIGHT_GPIOx		GPIOA				/* 右转灯GPIO分组 */
 

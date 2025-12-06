@@ -18,8 +18,10 @@ void Task_Angle(void *arg)
     float angle = app_gonio_GetAngleDeg();
     if (angle >= 0)
     {
-      printf("Angle = %.2f deg\r\n", angle);
+      printf("Ang=%.2f deg\r\n", angle);
     }
+    else
+      printf("Ang Err\r\n");
 
     vTaskDelay(pdMS_TO_TICKS(1000)); // 10Hz 采样
   }
@@ -39,7 +41,10 @@ int main(void)
   app_gonio_init();
   printf("gonio\r\n");
 
-  xTaskCreate(Task_Angle, "Angle", 128, NULL, 2, NULL);
+  app_trunSL_open_left();
+  app_trunSL_open_right();
+
+  xTaskCreate(Task_Angle, "Angle", 256, NULL, 2, NULL);
 
   vTaskStartScheduler();
   while (1)
