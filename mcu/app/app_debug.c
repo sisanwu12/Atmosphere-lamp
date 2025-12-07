@@ -27,13 +27,6 @@ int __io_putchar(int ch)
   return ch;
 }
 
-/**
- * @brief   debug初始化函数
- *
- * @return  初始化结果
- * @date    2025/12/4
- *
- */
 RESULT_Init app_debug_init()
 {
   RESULT_Init ret = ERR_Init_Start;
@@ -48,13 +41,6 @@ RESULT_Init app_debug_init()
   return ret;
 }
 
-/**
- * @brief   调用USART发送错误信息函数，本质就是bsp_usart_SendStr函数
- * @param   usart		指定发送的通道
- * @param		res_run	指定发送的运行错误信息
- * @author	王广平
- * @date	2025/12/4
- */
 void ERR_ShowBy_USART_RUN(RESULT_RUN res_run)
 {
   if (res_run != ERR_RUN_Finished)
@@ -86,13 +72,6 @@ void ERR_ShowBy_USART_RUN(RESULT_RUN res_run)
   printf("\r\n");
 }
 
-/**
- * @brief   调用USART发送错误信息函数，本质就是bsp_usart_SendStr函数
- * @param   usart			指定发送的通道
- * @param		res_Init	指定发送的初始化错误信息
- * @author	王广平
- * @date	2025/12/4
- */
 void ERR_ShowBy_USART_Init(RESULT_Init res_init)
 {
   switch (res_init)
@@ -120,6 +99,9 @@ void ERR_ShowBy_USART_Init(RESULT_Init res_init)
     break;
   case ERR_Init_ERROR_ADC:
     printf("ADC");
+    break;
+  case ERR_Init_ERROR_DMA:
+    printf("DMA");
     break;
   }
   printf(" Err Init\r\n");

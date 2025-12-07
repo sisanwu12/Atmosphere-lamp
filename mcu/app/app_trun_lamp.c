@@ -1,24 +1,23 @@
 /**
- * @file		app_basic_trunSL.c
+ * @file		app_trun_lamp.c
  * @brief		用于定义操作该模块的函数
  * @note		基础转向灯模块
  * @author	王广平
- * @date		2025/11/23
  **/
 
-#define __APP_BASIC_TRUNSL_C
+#define __APP_TRUN_LAMP_C
 
 /* 头文件引用 */
-#include "app_basic_trunSL.h"
+#include "app_trun_lamp.h"
 #include "bsp_gpio.h"
 #include "stm32f1xx_hal_gpio.h"
 
 /**
  * @brief		初始化基础转向灯
  * @return	初始化结果
- * @date		2025/11/24
+ * @date		2025/12/7
  **/
-RESULT_Init app_trunSL_init()
+RESULT_Init app_trunL_init()
 {
   RESULT_Init ret = ERR_Init_Start;
   /* 初始化左转灯 */
@@ -37,9 +36,9 @@ RESULT_Init app_trunSL_init()
 /**
  * @brief		打开左转向灯
  * @return	是否成功打开
- * @date		2025/12/4
+ * @date		2025/12/7
  **/
-RESULT_RUN app_trunSL_open_left()
+RESULT_RUN app_trunL_open_left()
 {
   HAL_GPIO_WritePin(LEFT_GPIOx, LEFT_PIN, GPIO_PIN_SET);
   return ERR_RUN_Finished;
@@ -48,9 +47,9 @@ RESULT_RUN app_trunSL_open_left()
 /**
  * @brief		打开右转向灯
  * @return	是否成功打开
- * @date		2025/12/4
+ * @date		2025/12/7
  **/
-RESULT_RUN app_trunSL_open_right()
+RESULT_RUN app_trunL_open_right()
 {
   HAL_GPIO_WritePin(RIGHT_GPIOx, RIGHT_PIN, GPIO_PIN_SET);
   return ERR_RUN_Finished;
@@ -59,9 +58,9 @@ RESULT_RUN app_trunSL_open_right()
 /**
  * @brief		关闭左转向灯
  * @return	是否成功关闭
- * @date		2025/12/4
+ * @date		2025/12/7
  **/
-RESULT_RUN app_trunSL_close_left()
+RESULT_RUN app_trunL_close_left()
 {
   HAL_GPIO_WritePin(LEFT_GPIOx, LEFT_PIN, GPIO_PIN_RESET);
   return ERR_RUN_Finished;
@@ -70,9 +69,9 @@ RESULT_RUN app_trunSL_close_left()
 /**
  * @brief		关闭右转向灯
  * @return	是否成功关闭
- * @date		2025/12/4
+ * @date		2025/12/7
  **/
-RESULT_RUN app_trunSL_close_right()
+RESULT_RUN app_trunL_close_right()
 {
   HAL_GPIO_WritePin(LEFT_GPIOx, RIGHT_PIN, GPIO_PIN_RESET);
   return ERR_RUN_Finished;

@@ -45,7 +45,6 @@ static inline void bsp_rcc_enable(GPIO_TypeDef *GPIOx)
 RESULT_Init bsp_gpio_Init(GPIO_TypeDef *GPIOx, u32 GPIOpin, u32 GPIOMode,
                           u32 GPIOPull, u32 GPIOSpeed)
 {
-  RESULT_Init ret = ERR_Init_Start;
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* 使能 GPIO 时钟 */
@@ -57,6 +56,34 @@ RESULT_Init bsp_gpio_Init(GPIO_TypeDef *GPIOx, u32 GPIOpin, u32 GPIOMode,
   GPIO_InitStruct.Speed = GPIOSpeed;
   HAL_GPIO_Init(GPIOx, &GPIO_InitStruct);
 
-  ret = ERR_Init_Finished;
-  return ret;
+  return ERR_Init_Finished;
+}
+
+/**
+ * @brief gpio 复用推挽模式初始化函数
+ *
+ * @param GPIOx 指定GPIO分组
+ * @param GPIOpin 指定GPIO引脚
+ * @return RESULT_Init	初始化结果
+ * @date	2025/12/7
+ */
+RESULT_Init bsp_gpio_AFPP_Init(GPIO_TypeDef *GPIOx, u32 GPIOpin)
+{
+
+  return bsp_gpio_Init(GPIOx, GPIOpin, GPIO_MODE_AF_PP, GPIO_NOPULL,
+                       GPIO_SPEED_FREQ_HIGH);
+}
+
+/**
+ * @brief gpio 推挽输出模式初始化函数
+ *
+ * @param GPIOx	指定GPIO分组
+ * @param GPIOpin	指定GPIO引脚
+ * @return RESULT_Init	初始化结果
+ * @date	2025/12/7
+ */
+RESULT_Init bsp_gpio_OTPP_Init(GPIO_TypeDef *GPIOx, u32 GPIOpin)
+{
+  return bsp_gpio_Init(GPIOx, GPIOpin, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL,
+                       GPIO_SPEED_FREQ_HIGH);
 }

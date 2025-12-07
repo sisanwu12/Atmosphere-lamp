@@ -15,5 +15,6 @@
 /* 函数声明 */
 RESULT_Init bsp_gpio_Init(GPIO_TypeDef *GPIOx, u32 GPIOpin, u32 GPIOMode,
                           u32 GPIOPull, u32 GPIOSpeed);
-
+RESULT_Init bsp_gpio_AFPP_Init(GPIO_TypeDef *GPIOx, u32 GPIOpin);
+RESULT_Init bsp_gpio_OTPP_Init(GPIO_TypeDef *GPIOx, u32 GPIOpin);
 #endif

@@ -5,9 +5,10 @@
 
 /* 头文件引用 */
 #include "FreeRTOS.h"
-#include "app_basic_trunSL.h"
 #include "app_debug.h"
+#include "app_dot_displayer.h"
 #include "app_gonio.h"
+#include "app_trun_lamp.h"
 #include "stdio.h"
 #include "task.h"
 
@@ -23,7 +24,29 @@ void Task_Angle(void *arg)
     else
       printf("Ang Err\r\n");
 
-    vTaskDelay(pdMS_TO_TICKS(1000)); // 10Hz 采样
+    vTaskDelay(pdMS_TO_TICKS(1000));
+  }
+}
+
+void MAX7219_ScanTest(void)
+{
+  HAL_Delay(200);
+  // 每行最左
+  for (uint8_t r = 1; r <= 8; r++)
+  {
+    for (uint8_t i = 1; i <= 8; i++)
+      app_dotD_Write(i, 0x00);
+    app_dotD_Write(r, 0x80);
+    HAL_Delay(300);
+  }
+  HAL_Delay(500);
+  // 每行最右
+  for (uint8_t r = 1; r <= 8; r++)
+  {
+    for (uint8_t i = 1; i <= 8; i++)
+      app_dotD_Write(i, 0x00);
+    app_dotD_Write(r, 0x01);
+    HAL_Delay(300);
   }
 }
 
@@ -35,14 +58,14 @@ int main(void)
 {
   HAL_Init();
   app_debug_init();
-  printf("Debug\r\n");
-  app_trunSL_init();
-  printf("TRUNSL\r\n");
+  app_trunL_init();
   app_gonio_init();
-  printf("gonio\r\n");
+  app_dotD_Init();
 
-  app_trunSL_open_left();
-  app_trunSL_open_right();
+  app_trunL_open_left();
+  app_trunL_open_right();
+
+  MAX7219_ScanTest();
 
   xTaskCreate(Task_Angle, "Angle", 256, NULL, 2, NULL);
 

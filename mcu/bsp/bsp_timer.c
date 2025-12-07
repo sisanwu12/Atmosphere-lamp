@@ -2,7 +2,6 @@
  * @file		bsp_timer.c
  * @brief		用于定义该模块的函数
  * @author	王广平
- * @date		2025/11/23
  */
 
 /* 头文件引用 */
