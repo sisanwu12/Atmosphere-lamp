@@ -41,6 +41,15 @@ RESULT_Init app_dotD_Init()
   if (RET != ERR_Init_Finished)
     return RET;
 
+  app_dotD_Write(0x0F, 0x00); // 关闭显示测试
+  app_dotD_Write(0x09, 0x00); // 无译码模式
+  app_dotD_Write(0x0A, 0x0F); // 亮度
+  app_dotD_Write(0x0B, 0x07); // 扫描 8 行
+  app_dotD_Write(0x0C, 0x01); // 开显示
+
+  for (uint8_t i = 1; i <= 8; i++)
+    app_dotD_Write(i, 0x00);
+
   /* 初始化完成 */
   return ERR_Init_Finished;
 }
