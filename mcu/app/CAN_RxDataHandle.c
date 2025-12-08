@@ -1,10 +1,11 @@
 // #include "CAN_RxDataHandle.h"
+// #include "blockbuffer.h"
 // #include "bsp_can.h"
 // #include "bsp_usart.h"
 // #include <stdio.h>
 // #include <string.h>
 
-// // ��ʼ��CAN���λ�����
+// // 初始化CAN环形缓冲区
 // void can_blockbuffer_init(void)
 // {
 //   can_rb = bb_init(CAN_BLOCKBUFFER_SIZE, CAN_BLOCKBUFFER_UNIT_SIZE);
@@ -18,7 +19,7 @@
 //   }
 // }
 
-// // ����CAN����
+// // 发送CAN报文
 // bool can_send_message(const can_message_t *msg)
 // {
 //   if (msg == NULL || msg->len > 8)
@@ -29,8 +30,9 @@
 
 //   CAN_TxHeaderTypeDef TxHeader;
 //   uint32_t TxMailbox;
+//   uint8_t TxData[8];
 
-//   /* ��׼֡/��չ֡���� */
+//   /* 标准帧/扩展帧配置 */
 //   if (msg->extended_id)
 //   {
 //     TxHeader.IDE = CAN_ID_EXT;
@@ -47,22 +49,33 @@
 //   TxHeader.RTR = msg->remoteFrame ? CAN_RTR_REMOTE : CAN_RTR_DATA;
 //   TxHeader.DLC = msg->len;
 //   TxHeader.TransmitGlobalTime = DISABLE;
+
+//   memcpy(TxData, msg->data, msg->len);
+
+//   /* 发送消息 */
+//   if (HAL_CAN_AddTxMessage(&hcan1, &TxHeader, TxData, &TxMailbox) != HAL_OK)
+//   {
+//     printf("CAN send failed: unable to add message to Tx mailbox\n");
+//     return false;
+//   }
+
+//   return true;
 // }
 
-// // ��FIFO���ݴ��뻺����
+// // 将FIFO数据存入缓冲区
 // void can_data_to_blockbuffer(void)
 // {
 //   CAN_RxHeaderTypeDef RxHeader;
 //   uint8_t u8_rx_data[8];
 
-//   /* �� FIFO0 ��ȡ�յ��ı��� */
+//   /* 从 FIFO0 读取收到的报文 */
 //   if (HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &RxHeader, u8_rx_data) ==
 //       HAL_OK)
 //   {
-//     can_message_t msg; // �ֲ�����
+//     can_message_t msg; // 局部变量
 //     void *wrptr = bb_wrptr_get_only(can_rb);
 
-//     /* ��� msg �ֶΣ�ע�ⳤ�ȱ߽� */
+//     /* 填充 msg 字段，注意长度边界 */
 //     msg.id = (RxHeader.IDE == CAN_ID_EXT) ? RxHeader.ExtId : RxHeader.StdId;
 //     msg.len = (RxHeader.DLC <= 8) ? RxHeader.DLC : 8;
 //     msg.extended_id = (RxHeader.IDE == CAN_ID_EXT);
@@ -76,7 +89,7 @@
 //     }
 //     else
 //     {
-//       /* ��д���������ȷ��д��ɹ� */
+//       /* 覆写最旧数据以确保写入成功 */
 //       bb_rdptr_shift(can_rb);
 //       wrptr = bb_wrptr_get_only(can_rb);
 //       if (wrptr)
@@ -87,6 +100,8 @@
 //     }
 //   }
 // }
+
+// // 从缓冲区读取CAN报文
 // bool can_read_message(can_message_t *msg)
 // {
 //   if (msg == NULL || !can_rb)
@@ -102,22 +117,33 @@
 //   return false;
 // }
 
-// // CAN����ص�
+// // 返回CAN缓冲区可用的消息数量
+// uint32_t can_available_messages(void)
+// {
+//   if (!can_rb)
+//     return 0;
+//   // 直接使用 blockbuffer 结构体的 count 字段
+//   bb_t *bb = (bb_t *)can_rb;
+//   return bb->count;
+// }
+
+// // CAN错误回调
 // void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan)
 // {
 //   printf("CAN Error: 0x%08lX\n", HAL_CAN_GetError(hcan));
 // }
 
-// // CAN�����жϻص�
+// // CAN接收中断回调
 // void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 // {
 //   if (hcan == &hcan1)
 //   {
 //     can_data_to_blockbuffer();
+//     printf("CAN RX Interrupt Triggered!\n"); // 添加调试信息
 //   }
 // }
 
-// // ��������
+// // 动力域处理
 // void process_powertrain_message(can_message_t *msg)
 // {
 //   switch (msg->id)
@@ -137,7 +163,7 @@
 //   }
 // }
 
-// // �����밲ȫ����
+// // 底盘与安全域处理
 // void process_chassis_safety_message(can_message_t *msg)
 // {
 //   switch (msg->id)
@@ -158,7 +184,7 @@
 //   }
 // }
 
-// // ��������
+// // 车身域处理
 // void process_body_message(can_message_t *msg)
 // {
 //   switch (msg->id)
@@ -178,7 +204,7 @@
 //   }
 // }
 
-// // ��Ϣ��������
+// // 信息娱乐域处理
 // void process_infotainment_message(can_message_t *msg)
 // {
 //   switch (msg->id)

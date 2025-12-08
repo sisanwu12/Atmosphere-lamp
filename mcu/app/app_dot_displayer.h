@@ -50,4 +50,12 @@ RESULT_Init app_dotD_Init();
  */
 RESULT_RUN app_dotD_Write(u8 addr, u8 data);
 
+/**
+ * @brief 清空点阵屏的内容
+ *
+ * @return RESULT_RUN 运行结果
+ * @date 2025/12/8
+ */
+RESULT_RUN app_dotD_Clear();
+
 #endif

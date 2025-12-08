@@ -28,28 +28,6 @@ void Task_Angle(void *arg)
   }
 }
 
-void MAX7219_ScanTest(void)
-{
-  HAL_Delay(200);
-  // 每行最左
-  for (uint8_t r = 1; r <= 8; r++)
-  {
-    for (uint8_t i = 1; i <= 8; i++)
-      app_dotD_Write(i, 0x00);
-    app_dotD_Write(r, 0x80);
-    HAL_Delay(300);
-  }
-  HAL_Delay(500);
-  // 每行最右
-  for (uint8_t r = 1; r <= 8; r++)
-  {
-    for (uint8_t i = 1; i <= 8; i++)
-      app_dotD_Write(i, 0x00);
-    app_dotD_Write(r, 0x01);
-    HAL_Delay(300);
-  }
-}
-
 /**
  * @brief		主函数
  * @date		2025/12/4
@@ -64,8 +42,6 @@ int main(void)
 
   app_trunL_open_left();
   app_trunL_open_right();
-
-  MAX7219_ScanTest();
 
   xTaskCreate(Task_Angle, "Angle", 256, NULL, 2, NULL);
 

@@ -47,8 +47,8 @@ RESULT_Init app_dotD_Init()
   app_dotD_Write(0x0B, 0x07); // 扫描 8 行
   app_dotD_Write(0x0C, 0x01); // 开显示
 
-  for (uint8_t i = 1; i <= 8; i++)
-    app_dotD_Write(i, 0x00);
+  /* 清屏函数 */
+  app_dotD_Clear();
 
   /* 初始化完成 */
   return ERR_Init_Finished;
@@ -64,6 +64,19 @@ RESULT_RUN app_dotD_Write(u8 addr, u8 data)
   if (RET != ERR_RUN_Finished)
     return RET;
   HAL_GPIO_WritePin(DOT_GPIOx, CS_PIN, GPIO_PIN_SET);
+
+  return ERR_RUN_Finished;
+}
+
+RESULT_RUN app_dotD_Clear()
+{
+  RESULT_RUN RET;
+  for (u8 i = 1; i <= 8; i++)
+  {
+    RET = app_dotD_Write(i, 0x00);
+    if (RET != ERR_RUN_Finished)
+      return RET;
+  }
 
   return ERR_RUN_Finished;
 }
