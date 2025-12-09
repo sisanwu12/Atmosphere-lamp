@@ -23,6 +23,21 @@
 // clang-format on
 #endif
 
+// clang-format off
+/* 箭头图案 */
+static u8 APP_DOTD_ARROW[8][2] =
+{
+1,0b00011000,
+2,0b00111100,
+3,0b01100110,
+4,0b11000011,
+5,0b00011000,
+6,0b00111100,
+7,0b01100110,
+8,0b11000011
+};
+// clang-format on
+
 /* 函数声明 */
 
 /**
@@ -57,5 +72,12 @@ RESULT_RUN app_dotD_Write(u8 addr, u8 data);
  * @date 2025/12/8
  */
 RESULT_RUN app_dotD_Clear();
+
+/**
+ * @brief 显示箭头函数
+ *
+ * @return RESULT_RUN
+ */
+RESULT_RUN app_dotD_Show_Arrow();
 
 #endif

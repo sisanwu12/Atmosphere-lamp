@@ -34,8 +34,10 @@ int main(void)
   app_gonio_init();
   app_dotD_Init();
 
+  app_dotD_Show_Arrow();
+
   /* 添加方向盘角度检测线程 */
-  xTaskCreate(Task_Angle, "Angle", 256, NULL, 2, NULL);
+  // xTaskCreate(Task_Angle, "Angle", 256, NULL, 2, NULL);
 
   vTaskStartScheduler();
   while (1)

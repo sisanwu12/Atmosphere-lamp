@@ -80,3 +80,15 @@ RESULT_RUN app_dotD_Clear()
 
   return ERR_RUN_Finished;
 }
+
+RESULT_RUN app_dotD_Show_Arrow()
+{
+  app_dotD_Write(1, 0b00011000);
+  app_dotD_Write(2, 0b00111100);
+  app_dotD_Write(3, 0b01100110);
+  app_dotD_Write(4, 0b11000011);
+  app_dotD_Write(5, 0b00011000);
+  app_dotD_Write(6, 0b00111100);
+  app_dotD_Write(7, 0b01100110);
+  app_dotD_Write(8, 0b11000011);
+}
