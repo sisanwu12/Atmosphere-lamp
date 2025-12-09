@@ -13,18 +13,10 @@
 #include "stdio.h"
 #include "task.h"
 
-
 void Task_Angle(void *arg)
 {
   for (;;)
   {
-    float angle = app_gonio_GetAngleDeg();
-    if (angle >= 0)
-    {
-      printf("Ang=%.2f deg\r\n", angle);
-    }
-    else
-      printf("Ang Err\r\n");
 
     vTaskDelay(pdMS_TO_TICKS(1000));
   }
@@ -37,6 +29,7 @@ void Task_Angle(void *arg)
 int main(void)
 {
   HAL_Init();
+  event_bus_init();
   app_debug_init();
   app_trunL_init();
   app_gonio_init();

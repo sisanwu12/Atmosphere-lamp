@@ -45,8 +45,6 @@ set(CMAKE_C_FLAGS "${MCU_FLAGS} -Os -ffunction-sections -fdata-sections -Wall -W
 set(CMAKE_CXX_FLAGS "${MCU_FLAGS} -Os -ffunction-sections -fdata-sections -Wall -Wextra -g \
                        -fno-exceptions -fno-rtti -flto -fno-threadsafe-statics")
 
-
-
 # 指定链接文件
 set(CMAKE_EXE_LINKER_FLAGS "-T${LD_DIR}/STM32F103XB_FLASH.ld -Wl,--gc-sections -static")
 

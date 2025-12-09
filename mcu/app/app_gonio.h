@@ -12,6 +12,7 @@
 /* 头文件引用 */
 #include "ERR.h"
 #include "__port_type__.h"
+#include "stm32f1xx_hal_tim.h"
 
 /* 宏定义 */
 // clang-format off
@@ -25,7 +26,40 @@
 #endif
 // clang-format on
 /* 函数声明 */
+
+/**
+ * @brief		角度测量模块初始化函数
+ * @return	初始化结果
+ * @date		2025/11/24
+ **/
 RESULT_Init app_gonio_init();
+
+/**
+ * @brief 获取当前角度函数
+ *
+ * @return 当前角度值
+ * @date 2025/12/9
+ */
 float app_gonio_GetAngleDeg(void);
+
+/**
+ * @brief 中断处理函数
+ * @date  2025/12/9
+ */
+void app_gonio_dispose_ISP();
+
+/**
+ * @brief 线程处理函数
+ * @date  2025/12/9
+ */
+void app_gonio_dispose_Task();
+
+/**
+ * @brief 获取定时器句柄
+ *
+ * @return 磁编码器所用定时器的句柄
+ * @date 2025/12/9
+ */
+TIM_HandleTypeDef *app_gonio_getTIMHandle();
 
 #endif

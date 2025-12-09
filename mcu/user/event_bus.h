@@ -17,16 +17,24 @@
 #include "task.h"
 
 /* 事件组定义 */
+// clang-format off
 typedef enum
 {
+  EVT_NONE     = 0,          /* 无事件 */
 
-  EVT_NONE = 0, /* 无事件 */
+  /* 1~7：  底层驱动事件 */
+  EVT_USART_RX   = (1 << 1),   /* usart接收事件 */
+  EVT_CAN_RX     = (1 << 2),   /* can接收事件 */
 
-  /* 1~7位：底层驱动事件 */
-  EVT_USART_RX = (1 << 1), /* usart接收事件 */
-  EVT_CAN_RX = (1 << 2),   /* can接收事件 */
+  /* 8~15:  控制逻辑事件 */
+  EVT_TURN_BACK  = (1 << 8),   /* 回正事件 */
+  EVT_TURN_LEFT  = (1 << 9),   /* 左转事件 */
+  EVT_TURN_RIGHT = (1 << 10),  /* 右转事件 */
+
+  /* 16~23: 用户交互事件 */
 
 } MAIN_EVT_T;
+// clang-format on
 
 /* 函数声明 */
 void event_bus_init(void);

@@ -10,27 +10,28 @@
 
 /* 头文件引用 */
 #include "app_gonio.h"
-#include "bsp_dma.h"
+#include "FreeRTOS.h"
 #include "bsp_gpio.h"
 #include "bsp_timer.h"
+#include "event_bus.h"
 #include "stm32f1xx_hal_cortex.h"
 #include "stm32f1xx_hal_gpio.h"
 #include "stm32f1xx_hal_tim.h"
+#include "task.h"
+#include <stdio.h>
 
 /* 静态全局变量 */
+/* 定时器句柄 */
 static TIM_HandleTypeDef APP_GONIO_TIM = {0};
 
-static volatile u32 riseTime = 0;
-static volatile u32 fallTime = 0;
-static volatile u32 pulseWidth = 0; // us
-static volatile u32 newData = 0;    // 标记是否有新数据
+/* 方向盘初始位置 */
+static float inital_value = 180;
+/* us */
+static volatile u32 pulseWidth = 0;
+/* 是否有新数据标记 */
+static volatile oboolean_t newData = bFALSE;
 
-/**
- * @brief		角度测量模块初始化函数
- * @return	初始化结果
- * @date		2025/11/24
- **/
-RESULT_Init app_gonio_init()
+[[nodiscard]] RESULT_Init app_gonio_init()
 {
   RESULT_Init ret = ERR_Init_Start;
 
@@ -72,7 +73,7 @@ float app_gonio_GetAngleDeg(void)
 {
   if (!newData)
     return -1; // 没有新数据
-  newData = 0;
+  newData = bFALSE;
 
   const float period_us = 2000.0f; // AS5048A PWM 周期固定 2ms
 
@@ -84,30 +85,79 @@ float app_gonio_GetAngleDeg(void)
   if (angle > 360)
     angle = 360;
 
-  return angle;
+  return angle - inital_value;
 }
 
-void TIM3_IRQHandler(void) { HAL_TIM_IRQHandler(&APP_GONIO_TIM); }
-
-void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
+void app_gonio_dispose_ISP()
 {
-  if (htim->Instance != TIM3)
-    return;
-  if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1)
+  static volatile u32 riseTime = 0;
+  static volatile u32 fallTime = 0;
+  if (APP_GONIO_TIM.Channel == HAL_TIM_ACTIVE_CHANNEL_1)
   {
     // 上升沿：记录开始时间
-    riseTime = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
+    riseTime = HAL_TIM_ReadCapturedValue(&APP_GONIO_TIM, TIM_CHANNEL_1);
   }
-  else if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_2)
+  else if (APP_GONIO_TIM.Channel == HAL_TIM_ACTIVE_CHANNEL_2)
   {
     // 下降沿：记录结束时间
-    fallTime = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2);
+    fallTime = HAL_TIM_ReadCapturedValue(&APP_GONIO_TIM, TIM_CHANNEL_2);
 
     if (fallTime >= riseTime)
       pulseWidth = fallTime - riseTime;
     else
       pulseWidth = (0xFFFF - riseTime) + fallTime;
 
-    newData = 1;
+    newData = bTRUE;
   }
 }
+
+void app_gonio_dispose_Task()
+{
+  /* 获取方向盘旋转角度 */
+  float angle = app_gonio_GetAngleDeg();
+
+  if (angle >= 90) /* 左转 */
+  {
+    /* 一秒内采样100次 */
+    for (u8 i = 0; i < 100; i++)
+    {
+      angle = app_gonio_GetAngleDeg();
+      if (angle < 90) /* 有一次采样不对则返回 */
+	return;
+      vTaskDelay(10);
+    }
+    /* 认为是左转动作 */
+    /* 发送左转事件 */
+    xEventGroupSetBits(event_bus_getHandle(), EVT_TURN_LEFT);
+  }
+  else if (angle <= -90) /* 右转 */
+  {
+    /* 一秒内采样100次 */
+    for (u8 i = 0; i < 100; i++)
+    {
+      angle = app_gonio_GetAngleDeg();
+      if (angle > -90) /* 有一次采样不对则返回 */
+	return;
+      vTaskDelay(10);
+    }
+    /* 认为是右转动作 */
+    /* 发送右转事件 */
+    xEventGroupSetBits(event_bus_getHandle(), EVT_TURN_RIGHT);
+  }
+  else if (angle <= 30 && angle >= -30) /* 回正 */
+  {
+    /* 一秒内采样100次 */
+    for (u8 i = 0; i < 100; i++)
+    {
+      angle = app_gonio_GetAngleDeg();
+      if (angle > 30 || angle < -30) /* 有一次采样不对则返回 */
+	return;
+      vTaskDelay(10);
+    }
+    /* 认为是回正事件 */
+    /* 发送回正消息 */
+    xEventGroupSetBits(event_bus_getHandle(), EVT_TURN_BACK);
+  }
+}
+
+TIM_HandleTypeDef *app_gonio_getTIMHandle() { return &APP_GONIO_TIM; }
