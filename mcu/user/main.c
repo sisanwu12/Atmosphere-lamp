@@ -10,14 +10,12 @@
 #include "app_gonio.h"
 #include "app_trun_lamp.h"
 #include "event_bus.h"
-#include "stdio.h"
 #include "task.h"
 
 void Task_Angle(void *arg)
 {
   for (;;)
   {
-
     vTaskDelay(pdMS_TO_TICKS(1000));
   }
 }

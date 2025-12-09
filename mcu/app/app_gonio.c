@@ -111,52 +111,105 @@ void app_gonio_dispose_ISP()
   }
 }
 
+/**
+ * @brief 左转稳定判断函数
+ * @return 是否稳定
+ * @date    2025/12/9
+ */
+static inline oboolean_t isStableLeft()
+{
+  for (int i = 0; i < 50; i++)
+  {
+    if (app_gonio_GetAngleDeg() < 90)
+      return bFALSE;
+    vTaskDelay(10);
+  }
+  return bTRUE;
+}
+
+/**
+ * @brief 右转稳定判断函数
+ * @return 是否稳定
+ * @date    2025/12/9
+ */
+static inline oboolean_t isStableRight()
+{
+  for (int i = 0; i < 50; i++)
+  {
+    if (app_gonio_GetAngleDeg() > -90)
+      return bFALSE;
+    vTaskDelay(10);
+  }
+}
+
+/**
+ * @brief 回正稳定判断函数
+ * @return 是否稳定
+ * @date    2025/12/9
+ */
+static inline oboolean_t isStableCenter()
+{
+  for (int i = 0; i < 50; i++)
+  {
+    if (app_gonio_GetAngleDeg() < -30 || app_gonio_GetAngleDeg() > 30)
+      return bFALSE;
+    vTaskDelay(10);
+  }
+}
+
 void app_gonio_dispose_Task()
 {
-  /* 获取方向盘旋转角度 */
-  float angle = app_gonio_GetAngleDeg();
+  EventGroupHandle_t evt = event_bus_getHandle();
 
-  if (angle >= 90) /* 左转 */
+  enum
   {
-    /* 一秒内采样100次 */
-    for (u8 i = 0; i < 100; i++)
-    {
-      angle = app_gonio_GetAngleDeg();
-      if (angle < 90) /* 有一次采样不对则返回 */
-	return;
-      vTaskDelay(10);
-    }
-    /* 认为是左转动作 */
-    /* 发送左转事件 */
-    xEventGroupSetBits(event_bus_getHandle(), EVT_TURN_LEFT);
-  }
-  else if (angle <= -90) /* 右转 */
+    STEER_CENTER = 0,
+    STEER_LEFT,
+    STEER_RIGHT
+  } state = STEER_CENTER;
+
+  while (1)
   {
-    /* 一秒内采样100次 */
-    for (u8 i = 0; i < 100; i++)
+    float angle = app_gonio_GetAngleDeg();
+
+    // 左转判断（>=90° 持续稳定）
+    if (angle >= 90)
     {
-      angle = app_gonio_GetAngleDeg();
-      if (angle > -90) /* 有一次采样不对则返回 */
-	return;
-      vTaskDelay(10);
+      if (state != STEER_LEFT) // 状态发生变化
+      {
+	if (isStableLeft()) // 连续采样稳定
+	{
+	  state = STEER_LEFT;
+	  xEventGroupSetBits(evt, EVT_TURN_LEFT);
+	}
+      }
     }
-    /* 认为是右转动作 */
-    /* 发送右转事件 */
-    xEventGroupSetBits(event_bus_getHandle(), EVT_TURN_RIGHT);
-  }
-  else if (angle <= 30 && angle >= -30) /* 回正 */
-  {
-    /* 一秒内采样100次 */
-    for (u8 i = 0; i < 100; i++)
+    // 右转判断（<= -90° 持续稳定）
+    else if (angle <= -90)
     {
-      angle = app_gonio_GetAngleDeg();
-      if (angle > 30 || angle < -30) /* 有一次采样不对则返回 */
-	return;
-      vTaskDelay(10);
+      if (state != STEER_RIGHT)
+      {
+	if (isStableRight())
+	{
+	  state = STEER_RIGHT;
+	  xEventGroupSetBits(evt, EVT_TURN_RIGHT);
+	}
+      }
     }
-    /* 认为是回正事件 */
-    /* 发送回正消息 */
-    xEventGroupSetBits(event_bus_getHandle(), EVT_TURN_BACK);
+    // 回正判断（-30° ~ +30°）
+    else if (angle <= 30 && angle >= -30)
+    {
+      if (state != STEER_CENTER)
+      {
+	if (isStableCenter())
+	{
+	  state = STEER_CENTER;
+	  xEventGroupSetBits(evt, EVT_TURN_BACK);
+	}
+      }
+    }
+
+    vTaskDelay(20); // 50Hz 采样足够
   }
 }
 

@@ -26,10 +26,46 @@
 #endif
 
 /* 函数声明 */
+
+/**
+ * @brief		初始化基础转向灯
+ * @return	初始化结果
+ * @date		2025/12/7
+ **/
 RESULT_Init app_trunL_init();
+
+/**
+ * @brief		打开左转向灯
+ * @return	是否成功打开
+ * @date		2025/12/7
+ **/
 RESULT_RUN app_trunL_open_left();
+
+/**
+ * @brief		打开右转向灯
+ * @return	是否成功打开
+ * @date		2025/12/7
+ **/
 RESULT_RUN app_trunL_open_right();
+
+/**
+ * @brief		关闭左转向灯
+ * @return	是否成功关闭
+ * @date		2025/12/7
+ **/
 RESULT_RUN app_trunL_close_left();
+
+/**
+ * @brief		关闭右转向灯
+ * @return	是否成功关闭
+ * @date		2025/12/7
+ **/
 RESULT_RUN app_trunL_close_right();
+
+/**
+ * @brief 处理线程函数
+ * @date  2025/12/9
+ */
+void app_trunL_dispose_Task();
 
 #endif
