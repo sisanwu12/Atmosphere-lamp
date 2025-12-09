@@ -9,8 +9,10 @@
 #include "app_dot_displayer.h"
 #include "app_gonio.h"
 #include "app_trun_lamp.h"
+#include "event_bus.h"
 #include "stdio.h"
 #include "task.h"
+
 
 void Task_Angle(void *arg)
 {
@@ -40,9 +42,7 @@ int main(void)
   app_gonio_init();
   app_dotD_Init();
 
-  app_trunL_open_left();
-  app_trunL_open_right();
-
+  /* 添加方向盘角度检测线程 */
   xTaskCreate(Task_Angle, "Angle", 256, NULL, 2, NULL);
 
   vTaskStartScheduler();

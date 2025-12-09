@@ -4,9 +4,9 @@ cmake_minimum_required(VERSION 4.0.2)
 project(ATMOSPHERE_LAMP)
 
 # 指定语言环境
-set(CMAKE_C_STANDARD 17)
+set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 ENABLE_LANGUAGE(ASM)
@@ -37,8 +37,17 @@ set(MEMMANG_DIR ${FRTOS_PORT_DIR}/MemMang)
 set(ARM_CM3_DIR ${FRTOS_PORT_DIR}/GCC/ARM_CM3)
 
 # 基本编译选项
-set(CMAKE_C_FLAGS "${MCU_FLAGS} -O2 -ffunction-sections -fdata-sections -Wall -g")
 
+# C 编译器
+set(CMAKE_C_FLAGS "${MCU_FLAGS} -Os -ffunction-sections -fdata-sections -Wall -Wextra -g")
+
+# C++ 编译器
+set(CMAKE_CXX_FLAGS "${MCU_FLAGS} -Os -ffunction-sections -fdata-sections -Wall -Wextra -g \
+                       -fno-exceptions -fno-rtti -flto -fno-threadsafe-statics")
+
+
+
+# 指定链接文件
 set(CMAKE_EXE_LINKER_FLAGS "-T${LD_DIR}/STM32F103XB_FLASH.ld -Wl,--gc-sections -static")
 
 
@@ -92,3 +101,6 @@ add_custom_command(TARGET ${PROJECT_NAME}.elf POST_BUILD
     COMMAND ${CMAKE_OBJCOPY} -O ihex ${PROJECT_NAME}.elf ${PROJECT_NAME}.hex
     COMMAND ${CMAKE_OBJCOPY} -O binary ${PROJECT_NAME}.elf ${PROJECT_NAME}.bin
 )
+
+# 去除警告
+target_compile_options(${PROJECT_NAME}.elf PRIVATE -w)

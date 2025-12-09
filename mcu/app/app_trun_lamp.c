@@ -76,3 +76,5 @@ RESULT_RUN app_trunL_close_right()
   HAL_GPIO_WritePin(LEFT_GPIOx, RIGHT_PIN, GPIO_PIN_RESET);
   return ERR_RUN_Finished;
 }
+
+void app_trunL_dispose_Task() {}

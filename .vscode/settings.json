@@ -16,6 +16,6 @@
         "-DCMAKE_SYSTEM_NAME=Generic"
     ],
     "editor.tabSize": 2,
-    "editor.insertSpaces": false,
+    "editor.insertSpaces": true,
     "editor.detectIndentation": false
 }
