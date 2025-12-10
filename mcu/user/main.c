@@ -12,14 +12,9 @@
 #include "event_bus.h"
 #include "task.h"
 
-void Task_Angle(void *arg)
-{
-  for (;;)
-  {
+void Task_Angle(void *arg) { app_gonio_dispose_Task(); }
 
-    vTaskDelay(pdMS_TO_TICKS(1000));
-  }
-}
+void Task_Trun(void *arg) { app_trunL_dispose_Task(); }
 
 /**
  * @brief		主函数
@@ -37,9 +32,9 @@ int main(void)
   app_dotD_Show_Arrow();
 
   /* 添加方向盘角度检测线程 */
-  // xTaskCreate(Task_Angle, "Angle", 256, NULL, 2, NULL);
+  xTaskCreate(Task_Angle, "Angle", 256, NULL, 2, NULL);
+  /* 添加转向灯响应线程 */
+  xTaskCreate(Task_Trun, "Trun", 128, NULL, 2, NULL);
 
   vTaskStartScheduler();
-  while (1)
-    ;
 }
