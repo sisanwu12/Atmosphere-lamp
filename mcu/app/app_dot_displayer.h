@@ -24,17 +24,44 @@
 #endif
 
 // clang-format off
-/* 箭头图案 */
-static u8 APP_DOTD_ARROW[8][2] =
+
+/* 空图案 */
+static u8 APP_DOTD_NULL[8] = 
 {
-1,0b00011000,
-2,0b00111100,
-3,0b01100110,
-4,0b11000011,
-5,0b00011000,
-6,0b00111100,
-7,0b01100110,
-8,0b11000011
+0b00000000,
+0b00000000,
+0b00000000,
+0b00000000,
+0b00000000,
+0b00000000,
+0b00000000,
+0b00000000
+};
+
+/* 箭头图案 */
+static u8 APP_DOTD_ARROW[8] =
+{
+0b00011000,
+0b00111100,
+0b01100110,
+0b11000011,
+0b00011000,
+0b00111100,
+0b01100110,
+0b11000011
+};
+
+/* 开始图案 */
+static u8 APP_DOTD_START[8] =
+{
+0b00000000,
+0b01000010,
+0b11100111,
+0b01000010,
+0b00000000,
+0b10000001,
+0b01111110,
+0b00000000
 };
 // clang-format on
 
@@ -49,7 +76,7 @@ static u8 APP_DOTD_ARROW[8][2] =
 RESULT_Init app_dotD_Init();
 
 /**
- * @brief 写点阵函数
+ * @brief 按行写入点阵函数
  *
  * @param addr 指定行
  * @note
@@ -63,7 +90,16 @@ RESULT_Init app_dotD_Init();
  * @return RESULT_RUN 运行结果
  * @date	2025/12/7
  */
-RESULT_RUN app_dotD_Write(u8 addr, u8 data);
+RESULT_RUN app_dotD_WriteLine(u8 addr, u8 data);
+
+/**
+ * @brief 整体写入点阵函数
+ *
+ * @param arr 点阵对应行的数据
+ * @return RESULT_RUN 运行结果
+ * @date 2025/12/11
+ */
+RESULT_RUN app_dotD_WriteALL(u8 arr[8]);
 
 /**
  * @brief 清空点阵屏的内容

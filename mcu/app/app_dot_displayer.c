@@ -41,11 +41,11 @@ RESULT_Init app_dotD_Init()
   if (RET != ERR_Init_Finished)
     return RET;
 
-  app_dotD_Write(0x0F, 0x00); // 关闭显示测试
-  app_dotD_Write(0x09, 0x00); // 无译码模式
-  app_dotD_Write(0x0A, 0x0F); // 亮度
-  app_dotD_Write(0x0B, 0x07); // 扫描 8 行
-  app_dotD_Write(0x0C, 0x01); // 开显示
+  app_dotD_WriteLine(0x0F, 0x00); // 关闭显示测试
+  app_dotD_WriteLine(0x09, 0x00); // 无译码模式
+  app_dotD_WriteLine(0x0A, 0x0F); // 亮度
+  app_dotD_WriteLine(0x0B, 0x07); // 扫描 8 行
+  app_dotD_WriteLine(0x0C, 0x01); // 开显示
 
   /* 清屏函数 */
   app_dotD_Clear();
@@ -54,7 +54,7 @@ RESULT_Init app_dotD_Init()
   return ERR_Init_Finished;
 }
 
-RESULT_RUN app_dotD_Write(u8 addr, u8 data)
+RESULT_RUN app_dotD_WriteLine(u8 addr, u8 data)
 {
   RESULT_RUN RET;
   u8 buf[2] = {addr, data};
@@ -68,27 +68,27 @@ RESULT_RUN app_dotD_Write(u8 addr, u8 data)
   return ERR_RUN_Finished;
 }
 
+RESULT_RUN app_dotD_WriteALL(u8 arr[8])
+{
+  RESULT_RUN ret;
+  for (u8 i = 1; i <= 8; i++)
+  {
+    ret = app_dotD_WriteLine(i, arr[i]);
+    if (ret)
+      return ret;
+  }
+  return ERR_RUN_Finished;
+}
+
 RESULT_RUN app_dotD_Clear()
 {
   RESULT_RUN RET;
   for (u8 i = 1; i <= 8; i++)
   {
-    RET = app_dotD_Write(i, 0x00);
-    if (RET != ERR_RUN_Finished)
-      return RET;
+    app_dotD_WriteLine(i, 0x00);
   }
 
   return ERR_RUN_Finished;
 }
 
-RESULT_RUN app_dotD_Show_Arrow()
-{
-  app_dotD_Write(1, 0b00011000);
-  app_dotD_Write(2, 0b00111100);
-  app_dotD_Write(3, 0b01100110);
-  app_dotD_Write(4, 0b11000011);
-  app_dotD_Write(5, 0b00011000);
-  app_dotD_Write(6, 0b00111100);
-  app_dotD_Write(7, 0b01100110);
-  app_dotD_Write(8, 0b11000011);
-}
+RESULT_RUN app_dotD_Show_Arrow() { app_dotD_WriteALL(APP_DOTD_ARROW); }

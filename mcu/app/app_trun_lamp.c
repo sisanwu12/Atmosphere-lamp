@@ -56,40 +56,38 @@ RESULT_RUN app_trunL_close_right()
 void app_trunL_dispose_Task()
 {
   EventGroupHandle_t evt = event_bus_getHandle();
-  u8 state = 0;
+  u8 state = 0; /* 简易状态机 */
 
   while (1)
   {
     EventBits_t bits =
         xEventGroupWaitBits(evt, EVT_TURN_LEFT | EVT_TURN_RIGHT | EVT_TURN_BACK,
-                            pdTRUE,  // clear on exit
-                            pdFALSE, // don't wait for all
-                            portMAX_DELAY);
+                            pdTRUE, pdFALSE, portMAX_DELAY);
 
     if (bits & EVT_TURN_LEFT)
     {
-      state = 1;
+      state = 1; /* 左转状态 */
     }
     else if (bits & EVT_TURN_RIGHT)
     {
-      state = 2;
+      state = 2; /* 右转状态 */
     }
     else if (bits & EVT_TURN_BACK)
     {
-      state = 0;
+      state = 0; /* 回正状态/常态 */
     }
 
     switch (state)
     {
-    case 1: // left
+    case 1: // 左转状态
       app_trunL_open_left();
       break;
 
-    case 2: // right
+    case 2: // 右转状态
       app_trunL_open_right();
       break;
 
-    case 0: // back
+    case 0: // 回正状态/常态
     default:
       app_trunL_close_left();
       app_trunL_close_right();

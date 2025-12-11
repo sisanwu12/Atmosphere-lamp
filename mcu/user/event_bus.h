@@ -20,7 +20,7 @@
 // clang-format off
 typedef enum
 {
-  EVT_NONE     = 0,          /* 无事件 */
+  EVT_NONE       = 0,          /* 无事件 */
 
   /* 1~7：  底层驱动事件 */
   EVT_USART_RX   = (1 << 1),   /* usart接收事件 */
