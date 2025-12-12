@@ -3,7 +3,6 @@
  * @brief		用于定义抽象该模块的结构体以及声明操作该模块的函数
  * @note		基础转向灯模块
  * @author	王广平
- * @date		2025/11/23
  **/
 
 #ifndef __APP_TRUN_LAMP_H

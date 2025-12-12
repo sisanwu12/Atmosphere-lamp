@@ -18,7 +18,6 @@
 #include "stm32f1xx_hal_gpio.h"
 #include "stm32f1xx_hal_tim.h"
 #include "task.h"
-#include <stdio.h>
 
 /* 静态全局变量 */
 /* 定时器句柄 */
@@ -31,7 +30,7 @@ static volatile u32 pulseWidth = 0;
 /* 是否有新数据标记 */
 static volatile oboolean_t newData = bFALSE;
 
-[[nodiscard]] RESULT_Init app_gonio_init()
+RESULT_Init app_gonio_init()
 {
   RESULT_Init ret = ERR_Init_Start;
 
