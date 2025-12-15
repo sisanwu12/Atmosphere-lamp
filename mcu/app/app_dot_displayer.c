@@ -17,6 +17,8 @@
 /* 全局变量 */
 static SPI_HandleTypeDef DOT_DISPLAYER_SPI = {0};
 
+/* 函数定义 */
+
 RESULT_Init app_dotD_Init()
 {
   RESULT_Init RET;
@@ -92,3 +94,20 @@ RESULT_RUN app_dotD_Clear()
 }
 
 RESULT_RUN app_dotD_Show_Arrow() { app_dotD_WriteALL(APP_DOTD_ARROW); }
+
+RESULT_RUN app_dotD_TurnWrite(u8 old[8], u8 ret[8])
+{
+  for (u8 r = 0; r < 8; r++)
+  {
+    u8 newRow = 0;
+    for (u8 c = 0; c < 8; c++)
+    {
+      u8 bit = (old[7 - c] >> r) & 1;
+      newRow |= bit << (7 - c);
+    }
+    ret[r] = newRow;
+  }
+}
+
+/* TODO：完成线程开发 */
+void app_dotD_dispose_Task() {}

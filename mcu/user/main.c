@@ -16,6 +16,8 @@ void Task_Angle(void *arg) { app_gonio_dispose_Task(); }
 
 void Task_Trun(void *arg) { app_trunL_dispose_Task(); }
 
+void Task_DotD(void *arg) {}
+
 /**
  * @brief		主函数
  * @date		2025/12/4

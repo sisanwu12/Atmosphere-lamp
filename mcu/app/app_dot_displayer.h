@@ -19,6 +19,7 @@
 #define CLK_PIN		GPIO_PIN_5
 #define CS_PIN		GPIO_PIN_4
 #define DOT_SPI		SPI1
+#define TurnCount 0           /* 转动次数 */
 
 // clang-format on
 #endif
@@ -57,12 +58,26 @@ static u8 APP_DOTD_START[8] =
 0b00000000,
 0b01000010,
 0b11100111,
-0b01000010,
+0b00000000,
 0b00000000,
 0b10000001,
 0b01111110,
 0b00000000
 };
+
+/* 加速图案 */
+static u8 APP_DOTD_UP[8] = 
+{
+0b00011000,
+0b00111100,
+0b00111100,
+0b00011000,
+0b00000000,
+0b00011000,
+0b00011000,
+0b00000000
+};
+
 // clang-format on
 
 /* 函数声明 */
@@ -115,5 +130,17 @@ RESULT_RUN app_dotD_Clear();
  * @return RESULT_RUN
  */
 RESULT_RUN app_dotD_Show_Arrow();
+
+/**
+ * @brief 转动图案函数（顺时针）
+ *
+ * @param old 原图案
+ * @param ret 转动后的图案
+ * @return 是否转动成功
+ */
+RESULT_RUN app_dotD_TurnWrite(u8 old[8], u8 ret[8]);
+
+/* 处理线程函数 */
+void app_dotD_dispose_Task();
 
 #endif
