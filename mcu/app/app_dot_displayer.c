@@ -17,7 +17,29 @@
 /* 全局变量 */
 static SPI_HandleTypeDef DOT_DISPLAYER_SPI = {0};
 
+/* 所用图案 */
+static u8 app_dotD_ARROW[8]; /* 箭头图案 */
+static u8 app_dotD_START[8]; /* 开始图案 */
+static u8 app_dotD_UP[8];    /* 加速图案 */
+
 /* 函数定义 */
+
+/* 图案初始化函数 */
+static inline RESULT_Init app_dotD_Pattern_Init()
+{
+  if (TurnCount)
+  {
+    app_dotD_TurnWrite(APP_DOTD_ARROW, app_dotD_ARROW);
+    app_dotD_TurnWrite(APP_DOTD_START, app_dotD_START);
+    app_dotD_TurnWrite(APP_DOTD_UP, app_dotD_UP);
+  }
+  for (u8 i = 0; i < TurnCount - 1; i++)
+  {
+    app_dotD_TurnWrite(app_dotD_ARROW, app_dotD_ARROW);
+    app_dotD_TurnWrite(app_dotD_START, app_dotD_START);
+    app_dotD_TurnWrite(app_dotD_UP, app_dotD_UP);
+  }
+}
 
 RESULT_Init app_dotD_Init()
 {
@@ -48,6 +70,9 @@ RESULT_Init app_dotD_Init()
   app_dotD_WriteLine(0x0A, 0x0F); // 亮度
   app_dotD_WriteLine(0x0B, 0x07); // 扫描 8 行
   app_dotD_WriteLine(0x0C, 0x01); // 开显示
+
+  /* 改变图案方向 */
+  app_dotD_Pattern_Init();
 
   /* 清屏函数 */
   app_dotD_Clear();
