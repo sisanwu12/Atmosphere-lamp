@@ -14,7 +14,6 @@ class MyServerCallbacks: public BLEServerCallbacks {
   void onConnect(BLEServer* pServer) {
     Serial.println("手机已成功连接ESP32 BLE");
   }
-
   void onDisconnect(BLEServer* pServer) {
     Serial.println("手机已断开BLE连接，重新开启广播...");
     // 断开后重新启动广播
@@ -27,17 +26,14 @@ class MyCharacteristicCallbacks: public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic *pCharacteristic) {
     // 获取手机写入的数据
     String receivedData = pCharacteristic->getValue();
-    
     if (receivedData.length() > 0) {
       Serial.println("\n********* 收到手机数据 *********");
       Serial.print("数据内容：");
       Serial.println(receivedData);
       Serial.println("********************************\n");
-
       // 转换为小写，避免大小写敏感问题
       String lowerData = receivedData;
       lowerData.toLowerCase();
-      
       if (lowerData == "noled") {
         Serial.println("检测到noLED，回复nihao给手机并控制LED闪烁");
         // 设置回复内容并通过notify推送给手机
