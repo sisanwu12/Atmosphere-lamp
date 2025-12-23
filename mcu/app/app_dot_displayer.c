@@ -11,6 +11,7 @@
 #include "ERR.h"
 #include "bsp_gpio.h"
 #include "bsp_spi.h"
+#include "event_bus.h"
 #include "stm32f1xx_hal_gpio.h"
 #include "stm32f1xx_hal_spi.h"
 
@@ -18,7 +19,8 @@
 static SPI_HandleTypeDef DOT_DISPLAYER_SPI = {0};
 
 /* 所用图案 */
-static u8 app_dotD_ARROW[8]; /* 箭头图案 */
+static u8 app_dotD_LEFT[8];  /* 左转箭头图案 */
+static u8 app_dotD_RIGHT[8]; /* 右转箭头图案 */
 static u8 app_dotD_START[8]; /* 开始图案 */
 static u8 app_dotD_UP[8];    /* 加速图案 */
 
@@ -29,13 +31,15 @@ static inline RESULT_Init app_dotD_Pattern_Init()
 {
   if (TurnCount)
   {
-    app_dotD_TurnWrite(APP_DOTD_ARROW, app_dotD_ARROW);
+    app_dotD_TurnWrite(APP_DOTD_ARROW, app_dotD_LEFT);
+    app_dotD_TurnWrite(APP_DOTD_ARROW, app_dotD_RIGHT);
     app_dotD_TurnWrite(APP_DOTD_START, app_dotD_START);
     app_dotD_TurnWrite(APP_DOTD_UP, app_dotD_UP);
   }
   for (u8 i = 0; i < TurnCount - 1; i++)
   {
-    app_dotD_TurnWrite(app_dotD_ARROW, app_dotD_ARROW);
+    app_dotD_TurnWrite(APP_DOTD_ARROW, app_dotD_LEFT);
+    app_dotD_TurnWrite(APP_DOTD_ARROW, app_dotD_RIGHT);
     app_dotD_TurnWrite(app_dotD_START, app_dotD_START);
     app_dotD_TurnWrite(app_dotD_UP, app_dotD_UP);
   }
@@ -118,7 +122,10 @@ RESULT_RUN app_dotD_Clear()
   return ERR_RUN_Finished;
 }
 
-RESULT_RUN app_dotD_Show_Arrow() { app_dotD_WriteALL(APP_DOTD_ARROW); }
+RESULT_RUN app_dotD_Show_LEFT() { app_dotD_WriteALL(app_dotD_LEFT); }
+RESULT_RUN app_dotD_Show_RIGHT() { app_dotD_WriteALL(app_dotD_RIGHT); }
+RESULT_RUN app_dotD_Show_UP() { app_dotD_WriteALL(app_dotD_UP); }
+RESULT_RUN app_dotD_Show_START() { app_dotD_WriteALL(app_dotD_START); }
 
 RESULT_RUN app_dotD_TurnWrite(u8 old[8], u8 ret[8])
 {
@@ -135,4 +142,59 @@ RESULT_RUN app_dotD_TurnWrite(u8 old[8], u8 ret[8])
 }
 
 /* TODO：完成线程开发 */
-void app_dotD_dispose_Task() {}
+void app_dotD_dispose_Task()
+{
+  EventGroupHandle_t evt = event_bus_getHandle();
+  u8 state = 0; /* 简易状态机 */
+  while (1)
+  {
+    EventBits_t bits = xEventGroupWaitBits(
+        evt,
+        EVT_TURN_LEFT | EVT_TURN_RIGHT | EVT_TURN_BACK | EVT_UP | EVT_USER_COM,
+        pdTRUE, pdFALSE, portMAX_DELAY);
+
+    if (bits & EVT_TURN_LEFT)
+    {
+      state = 1; /* 左转状态 */
+    }
+    else if (bits & EVT_TURN_RIGHT)
+    {
+      state = 2; /* 右转状态 */
+    }
+    else if (bits & EVT_UP)
+    {
+      state = 3;
+    }
+    else if (bits & EVT_USER_COM)
+    {
+      state = 4;
+    }
+    else if (bits & EVT_TURN_BACK)
+    {
+      state = 0; /* 回正状态/常态 */
+    }
+    switch (state)
+    {
+    case 1: // 左转状态
+      app_dotD_Show_LEFT();
+      break;
+
+    case 2: // 右转状态
+      app_dotD_Show_RIGHT();
+      break;
+
+    case 3: // 加速状态
+      app_dotD_Show_UP();
+      break;
+
+    case 4: // 加速状态
+      app_dotD_Show_START();
+      break;
+
+    case 0: // 回正状态/常态
+    default:
+      app_dotD_Clear();
+      break;
+    }
+  }
+}

@@ -124,12 +124,10 @@ RESULT_RUN app_dotD_WriteALL(u8 arr[8]);
  */
 RESULT_RUN app_dotD_Clear();
 
-/**
- * @brief 显示箭头函数
- *
- * @return RESULT_RUN
- */
-RESULT_RUN app_dotD_Show_Arrow();
+RESULT_RUN app_dotD_Show_LEFT();
+RESULT_RUN app_dotD_Show_RIGHT();
+RESULT_RUN app_dotD_Show_UP();
+RESULT_RUN app_dotD_Show_START();
 
 /**
  * @brief 转动图案函数（顺时针）

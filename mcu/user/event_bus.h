@@ -30,8 +30,10 @@ typedef enum
   EVT_TURN_BACK  = (1 << 8),   /* 回正事件 */
   EVT_TURN_LEFT  = (1 << 9),   /* 左转事件 */
   EVT_TURN_RIGHT = (1 << 10),  /* 右转事件 */
+  EVT_UP         = (1 << 11),  /* 加速事件 */
 
   /* 16~23: 用户交互事件 */
+  EVT_USER_COM   = (1 << 16), /* 用户靠近 */
 
 } MAIN_EVT_T;
 // clang-format on
