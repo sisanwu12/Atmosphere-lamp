@@ -2,12 +2,16 @@
 #include <BLEUtils.h>
 #include <BLEServer.h>
 #include <BLECharacteristic.h>
+#include <Adafruit_NeoPixel.h>  
 
 // 自定义BLE服务和特征UUID
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 
-int led = 5;
+// WS2812配置参数（关键！根据你的硬件修改）
+#define LED_PIN     5       // WS2812数据引脚
+#define LED_COUNT   61      // WS2812灯珠数量
+Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800); 
 
 // BLE服务器回调：处理连接/断开事件
 class MyServerCallbacks: public BLEServerCallbacks {
@@ -19,7 +23,7 @@ class MyServerCallbacks: public BLEServerCallbacks {
     // 断开后重新启动广播
     BLEDevice::startAdvertising();
   }
-};
+};  
 
 // BLE特征回调：处理手机写入数据事件
 class MyCharacteristicCallbacks: public BLECharacteristicCallbacks {
@@ -35,16 +39,23 @@ class MyCharacteristicCallbacks: public BLECharacteristicCallbacks {
       String lowerData = receivedData;
       lowerData.toLowerCase();
       if (lowerData == "noled") {
-        Serial.println("检测到noLED，回复nihao给手机并控制LED闪烁");
+        Serial.println("检测到noLED，回复nihao给手机并控制WS2812点亮");
+        // 控制WS2812点亮
+        for(int i=0; i<LED_COUNT; i++){
+          strip.setPixelColor(i, strip.Color(255, 0, 0)); // R=255, G=0, B=0 红色
+        }
+        strip.show(); // 刷新显示
+        
         // 设置回复内容并通过notify推送给手机
         pCharacteristic->setValue("LEDNO");
         pCharacteristic->notify();
-        digitalWrite(led, HIGH );
       }
       else if (lowerData == "offled") {
-        Serial.println("检测到offled，关闭LED并回复ledoff");
-        // 关闭LED灯
-        digitalWrite(led,LOW);
+        Serial.println("检测到offled，关闭WS2812并回复ledoff");
+        // 关闭WS2812
+        strip.clear(); // 清空所有灯珠颜色
+        strip.show();  // 刷新显示，生效关闭状态
+        
         // 回复ledoff给手机
         pCharacteristic->setValue("LEDOFF");
         pCharacteristic->notify();
@@ -54,12 +65,14 @@ class MyCharacteristicCallbacks: public BLECharacteristicCallbacks {
 };
 
 void setup() {
-  // 初始化串口
   Serial.begin(115200);
   delay(100);
-  Serial.println("开始初始化ESP32 BLE...");
-  pinMode(led, OUTPUT);
-  digitalWrite(led,LOW);
+  Serial.println("开始初始化ESP32 BLE + WS2812...");
+  
+  strip.begin();
+  strip.clear(); // 上电默认关闭所有灯珠
+  strip.show();  
+
   // 1. 初始化BLE设备，设置设备名称
   BLEDevice::init("My_ESP32");
 
@@ -102,11 +115,12 @@ void loop() {
   BLEServer *pServer = BLEDevice::getServer();
   BLEService *pService = pServer->getServiceByUUID(SERVICE_UUID);
   BLECharacteristic *pCharacteristic = pService->getCharacteristic(CHARACTERISTIC_UUID);
-  //在未未接到蓝牙消息时推送心跳包
-    String currentValue = pCharacteristic->getValue();
-  if (currentValue != "LEDNO"&&currentValue !="LEDOFF") {
+  
+  // 在未接到蓝牙控制指令时推送心跳包
+  String currentValue = pCharacteristic->getValue();
+  // 避免心跳包覆盖BLE回复信息
+  if (currentValue != "LEDNO" && currentValue != "LEDOFF") {
     pCharacteristic->setValue("ESP32心跳包：" + String(millis()/1000) + "s");
     pCharacteristic->notify();
   }
 }
-
