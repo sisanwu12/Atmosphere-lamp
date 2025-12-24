@@ -8,10 +8,23 @@
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 
-// WS2812配置参数（关键！根据你的硬件修改）
-#define LED_PIN     5       // WS2812数据引脚
-#define LED_COUNT   61      // WS2812灯珠数量
+// WS2812配置参数
+#define LED_PIN     5       
+#define LED_COUNT   61      
+#define LED_LEFT_COUNT   30  
+#define LED_RIGHT_COUNT  30  
 Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800); 
+
+// 全局变量：右侧灯闪烁控制
+bool isRightBlink = false;       
+unsigned long previousRightBlinkMillis = 0; 
+const long blinkInterval = 500;  
+bool rightLedState = false;     
+
+// 全局变量：左侧灯闪烁控制
+bool isLeftBlink = false;        
+unsigned long previousLeftBlinkMillis = 0;  
+bool leftLedState = false;       
 
 // BLE服务器回调：处理连接/断开事件
 class MyServerCallbacks: public BLEServerCallbacks {
@@ -20,7 +33,6 @@ class MyServerCallbacks: public BLEServerCallbacks {
   }
   void onDisconnect(BLEServer* pServer) {
     Serial.println("手机已断开BLE连接，重新开启广播...");
-    // 断开后重新启动广播
     BLEDevice::startAdvertising();
   }
 };  
@@ -35,45 +47,94 @@ class MyCharacteristicCallbacks: public BLECharacteristicCallbacks {
       Serial.print("数据内容：");
       Serial.println(receivedData);
       Serial.println("********************************\n");
-      // 转换为小写，避免大小写敏感问题
       String lowerData = receivedData;
       lowerData.toLowerCase();
-      if (lowerData == "noled") {
-        Serial.println("检测到noLED，回复nihao给手机并控制WS2812点亮");
-        // 控制WS2812点亮
+      
+      // 链式条件判断
+      if (lowerData == "brake") {
+        Serial.println("检测到brake（刹车），控制所有灯珠亮红色并回复brake_ok");
+        isRightBlink = false; 
+        isLeftBlink = false;  
+        // 所有灯珠亮红色
         for(int i=0; i<LED_COUNT; i++){
-          strip.setPixelColor(i, strip.Color(255, 0, 0)); // R=255, G=0, B=0 红色
+          strip.setPixelColor(i, strip.Color(255, 0, 0)); // 红色
         }
-        strip.show(); // 刷新显示
-        
-        // 设置回复内容并通过notify推送给手机
-        pCharacteristic->setValue("LEDNO");
+        strip.show(); 
+        pCharacteristic->setValue("brake_ok");
+        pCharacteristic->notify();
+      }
+      else if (lowerData == "turnright") {
+        Serial.println("检测到turnright（右转），开启右侧灯持续闪烁并回复turnright_ok");
+        isRightBlink = true;  
+        isLeftBlink = false;  
+        pCharacteristic->setValue("turnright_ok");
+        pCharacteristic->notify();
+      }
+      else if (lowerData == "turnleft") {
+        Serial.println("检测到turnleft（左转），开启左侧灯持续闪烁并回复turnleft_ok");
+        isLeftBlink = true;   
+        isRightBlink = false; 
+        pCharacteristic->setValue("turnleft_ok");
         pCharacteristic->notify();
       }
       else if (lowerData == "offled") {
-        Serial.println("检测到offled，关闭WS2812并回复ledoff");
-        // 关闭WS2812
-        strip.clear(); // 清空所有灯珠颜色
-        strip.show();  // 刷新显示，生效关闭状态
-        
-        // 回复ledoff给手机
-        pCharacteristic->setValue("LEDOFF");
+        Serial.println("检测到offled，停止所有闪烁并关闭所有WS2812灯珠，回复ledoff_ok");
+        isRightBlink = false;
+        isLeftBlink = false;  
+        strip.clear(); // 关闭所有灯珠
+        strip.show();  
+        pCharacteristic->setValue("ledoff_ok");
         pCharacteristic->notify();
       }
     }
   }
 };
 
+// 右侧灯非阻塞闪烁函数
+void rightLedBlink() {
+  unsigned long currentMillis = millis();
+  // 仅当右侧闪烁使能时，执行时序判断
+  if (isRightBlink && (currentMillis - previousRightBlinkMillis >= blinkInterval)) {
+    previousRightBlinkMillis = currentMillis; 
+    rightLedState = !rightLedState;           
+    for(int i=31; i<LED_COUNT; i++){
+      if (rightLedState) {
+        strip.setPixelColor(i, strip.Color(255, 0, 0)); 
+      } else {
+        strip.setPixelColor(i, strip.Color(0, 0, 0));
+      }
+    }
+    strip.show(); 
+  }
+}
+
+// 左侧灯非阻塞闪烁函数
+void leftLedBlink() {
+  unsigned long currentMillis = millis();
+  // 仅当左侧闪烁使能时，执行时序判断
+  if (isLeftBlink && (currentMillis - previousLeftBlinkMillis >= blinkInterval)) {
+    previousLeftBlinkMillis = currentMillis; 
+    leftLedState = !leftLedState; 
+    for(int i=0; i<LED_LEFT_COUNT; i++){
+      if (leftLedState) {
+        strip.setPixelColor(i, strip.Color(255, 0, 0)); 
+      } else {
+        strip.setPixelColor(i, strip.Color(0, 0, 0));  
+      }
+    }
+    strip.show(); 
+  }
+}
+
 void setup() {
   Serial.begin(115200);
   delay(100);
-  Serial.println("开始初始化ESP32 BLE + WS2812...");
+  Serial.println("开始初始化ESP32 BLE + WS2812");
   
   strip.begin();
-  strip.clear(); // 上电默认关闭所有灯珠
+  strip.clear(); 
   strip.show();  
 
-  // 1. 初始化BLE设备，设置设备名称
   BLEDevice::init("My_ESP32");
 
   // 2. 创建BLE服务器并设置回调
@@ -94,7 +155,7 @@ void setup() {
   // 5. 绑定特征回调
   pCharacteristic->setCallbacks(new MyCharacteristicCallbacks());
   // 设置特征初始值
-  pCharacteristic->setValue("Hello from ESP32 BLE");
+  pCharacteristic->setValue("Hello from ESP32 BLE (with turnleft)");
 
   // 6. 启动BLE服务
   pService->start();
@@ -111,15 +172,19 @@ void setup() {
 }
 
 void loop() {
-  delay(1000);
+  // 1. 执行右侧灯非阻塞闪烁
+  rightLedBlink();
+  // 2. 执行左侧灯非阻塞闪烁
+  leftLedBlink();
+
+  // 3. 推送BLE心跳包
+  delay(1000); // 心跳包间隔1秒
   BLEServer *pServer = BLEDevice::getServer();
   BLEService *pService = pServer->getServiceByUUID(SERVICE_UUID);
   BLECharacteristic *pCharacteristic = pService->getCharacteristic(CHARACTERISTIC_UUID);
-  
-  // 在未接到蓝牙控制指令时推送心跳包
+  // 避免心跳包覆盖BLE指令回复信息
   String currentValue = pCharacteristic->getValue();
-  // 避免心跳包覆盖BLE回复信息
-  if (currentValue != "LEDNO" && currentValue != "LEDOFF") {
+  if (currentValue != "brake_ok" && currentValue != "turnright_ok" && currentValue != "turnleft_ok" && currentValue != "ledoff_ok") {
     pCharacteristic->setValue("ESP32心跳包：" + String(millis()/1000) + "s");
     pCharacteristic->notify();
   }
