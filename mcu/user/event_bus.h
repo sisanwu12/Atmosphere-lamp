@@ -31,6 +31,8 @@ typedef enum
   EVT_TURN_LEFT  = (1 << 9),   /* 左转事件 */
   EVT_TURN_RIGHT = (1 << 10),  /* 右转事件 */
   EVT_UP         = (1 << 11),  /* 加速事件 */
+  EVT_DOWN       = (1 << 12),  /* 减速事件 */
+  EVT_STOP       = (1 << 13),  /* 停车事件 */
 
   /* 16~23: 用户交互事件 */
   EVT_USER_COM   = (1 << 16), /* 用户靠近 */

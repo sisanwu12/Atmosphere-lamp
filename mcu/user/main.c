@@ -5,6 +5,7 @@
 
 /* 头文件引用 */
 #include "FreeRTOS.h"
+#include "app_can.h"
 #include "app_debug.h"
 #include "app_dot_displayer.h"
 #include "app_gonio.h"
@@ -18,6 +19,8 @@ void Task_Trun(void *arg) { app_trunL_dispose_Task(); }
 
 void Task_DotD(void *arg) { app_dotD_dispose_Task(); }
 
+void Task_CAN(void *arg) { app_can_dispose_Task(); }
+
 /**
  * @brief		主函数
  * @date		2025/12/4
@@ -30,6 +33,7 @@ int main(void)
   app_trunL_init();
   app_gonio_init();
   app_dotD_Init();
+  app_can_init();
 
   /* 添加方向盘角度检测线程 */
   xTaskCreate(Task_Angle, "Angle", 128, NULL, 2, NULL);
@@ -37,6 +41,8 @@ int main(void)
   xTaskCreate(Task_Trun, "Trun", 128, NULL, 2, NULL);
   /* 添加点阵灯响应线程 */
   xTaskCreate(Task_DotD, "Task_DotD", 256, NULL, 2, NULL);
+  /* 添加 CAN 协议解析线程（负责将加速/减速/停车报文转为事件） */
+  xTaskCreate(Task_CAN, "CAN", 128, NULL, 2, NULL);
 
   vTaskStartScheduler();
 }
