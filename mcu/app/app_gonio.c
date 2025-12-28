@@ -30,6 +30,40 @@ static volatile u32 pulseWidth = 0;
 /* 是否有新数据标记 */
 static volatile oboolean_t newData = bFALSE;
 
+/**
+ * @brief 尝试读取一次“最新角度”（读取成功会消费 newData 标记）
+ *
+ * @param[out] out_angle_deg 角度输出（单位：度，范围约 -180~+180）
+ * @retval bTRUE  读取到新数据
+ * @retval bFALSE 暂无新数据
+ *
+ * @note
+ * 1) app_gonio_GetAngleDeg() 会清除 newData，因此上层状态机里要避免
+ *    “先读一次再做稳定判断”的写法，否则稳定判断阶段可能一直读不到新数据。
+ * 2) 这里把“读取并消费”封装成 try-get 形式，方便稳定判断与状态机复用。
+ */
+static inline oboolean_t app_gonio_try_get_angle(float *out_angle_deg)
+{
+  if (out_angle_deg == NULL)
+    return bFALSE;
+
+  if (!newData)
+    return bFALSE;
+  newData = bFALSE;
+
+  const float period_us = 2000.0f; // AS5048A PWM 周期固定 2ms
+  float angle = ((float)pulseWidth / period_us) * 360.0f;
+
+  /* 保护：范围必须在 0~360（异常脉宽时避免算出 NAN/INF） */
+  if (angle < 0)
+    angle = 0;
+  if (angle > 360)
+    angle = 360;
+
+  *out_angle_deg = angle - inital_value;
+  return bTRUE;
+}
+
 RESULT_Init app_gonio_init()
 {
   RESULT_Init ret = ERR_Init_Start;
@@ -70,21 +104,10 @@ RESULT_Init app_gonio_init()
 
 float app_gonio_GetAngleDeg(void)
 {
-  if (!newData)
+  float angle = 0.0f;
+  if (!app_gonio_try_get_angle(&angle))
     return -1; // 没有新数据
-  newData = bFALSE;
-
-  const float period_us = 2000.0f; // AS5048A PWM 周期固定 2ms
-
-  float angle = ((float)pulseWidth / period_us) * 360.0f;
-
-  // AS5048A 12bit 0–4095，范围必须在 0–360
-  if (angle < 0)
-    angle = 0;
-  if (angle > 360)
-    angle = 360;
-
-  return angle - inital_value;
+  return angle;
 }
 
 void app_gonio_dispose_ISP()
@@ -117,11 +140,20 @@ void app_gonio_dispose_ISP()
  */
 static inline oboolean_t isStableLeft()
 {
-  for (int i = 0; i < 50; i++)
+  /* 只统计“拿到新数据”的次数，避免偶发丢采样导致误判为不稳定 */
+  for (int ok = 0; ok < 50;)
   {
-    if (app_gonio_GetAngleDeg() < 90)
+    float angle = 0.0f;
+    if (!app_gonio_try_get_angle(&angle))
+    {
+      vTaskDelay(pdMS_TO_TICKS(10));
+      continue;
+    }
+
+    if (angle < 90)
       return bFALSE;
-    vTaskDelay(10);
+    ok++;
+    vTaskDelay(pdMS_TO_TICKS(10));
   }
   return bTRUE;
 }
@@ -133,12 +165,22 @@ static inline oboolean_t isStableLeft()
  */
 static inline oboolean_t isStableRight()
 {
-  for (int i = 0; i < 50; i++)
+  for (int ok = 0; ok < 50;)
   {
-    if (app_gonio_GetAngleDeg() > -90)
+    float angle = 0.0f;
+    if (!app_gonio_try_get_angle(&angle))
+    {
+      vTaskDelay(pdMS_TO_TICKS(10));
+      continue;
+    }
+
+    if (angle > -90)
       return bFALSE;
-    vTaskDelay(10);
+    ok++;
+    vTaskDelay(pdMS_TO_TICKS(10));
   }
+
+  return bTRUE;
 }
 
 /**
@@ -148,12 +190,22 @@ static inline oboolean_t isStableRight()
  */
 static inline oboolean_t isStableCenter()
 {
-  for (int i = 0; i < 50; i++)
+  for (int ok = 0; ok < 50;)
   {
-    if (app_gonio_GetAngleDeg() < -30 || app_gonio_GetAngleDeg() > 30)
+    float angle = 0.0f;
+    if (!app_gonio_try_get_angle(&angle))
+    {
+      vTaskDelay(pdMS_TO_TICKS(10));
+      continue;
+    }
+
+    if (angle < -30 || angle > 30)
       return bFALSE;
-    vTaskDelay(10);
+    ok++;
+    vTaskDelay(pdMS_TO_TICKS(10));
   }
+
+  return bTRUE;
 }
 
 void app_gonio_dispose_Task()
@@ -169,18 +221,25 @@ void app_gonio_dispose_Task()
 
   while (1)
   {
-    float angle = app_gonio_GetAngleDeg();
+    float angle = 0.0f;
+
+    /* 没有新数据就等待下一次采样，避免用旧数据重复判断 */
+    if (!app_gonio_try_get_angle(&angle))
+    {
+      vTaskDelay(pdMS_TO_TICKS(20));
+      continue;
+    }
 
     // 左转判断（>=90° 持续稳定）
     if (angle >= 90)
     {
       if (state != STEER_LEFT) // 状态发生变化
       {
-	if (isStableLeft()) // 连续采样稳定
-	{
-	  state = STEER_LEFT;
-	  xEventGroupSetBits(evt, EVT_TURN_LEFT);
-	}
+        if (isStableLeft()) // 连续采样稳定
+        {
+          state = STEER_LEFT;
+          xEventGroupSetBits(evt, EVT_TURN_LEFT);
+        }
       }
     }
     // 右转判断（<= -90° 持续稳定）
@@ -188,11 +247,11 @@ void app_gonio_dispose_Task()
     {
       if (state != STEER_RIGHT)
       {
-	if (isStableRight())
-	{
-	  state = STEER_RIGHT;
-	  xEventGroupSetBits(evt, EVT_TURN_RIGHT);
-	}
+        if (isStableRight())
+        {
+          state = STEER_RIGHT;
+          xEventGroupSetBits(evt, EVT_TURN_RIGHT);
+        }
       }
     }
     // 回正判断（-30° ~ +30°）
@@ -200,15 +259,15 @@ void app_gonio_dispose_Task()
     {
       if (state != STEER_CENTER)
       {
-	if (isStableCenter())
-	{
-	  state = STEER_CENTER;
-	  xEventGroupSetBits(evt, EVT_TURN_BACK);
-	}
+        if (isStableCenter())
+        {
+          state = STEER_CENTER;
+          xEventGroupSetBits(evt, EVT_TURN_BACK);
+        }
       }
     }
 
-    vTaskDelay(20); // 50Hz 采样足够
+    vTaskDelay(pdMS_TO_TICKS(20)); // 50Hz 采样足够
   }
 }
 

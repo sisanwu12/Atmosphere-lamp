@@ -1,3 +1,0 @@
-/mnt/share/ProjectFiles/Atmosphere-lamp/build_local/CMakeFiles/ATMOSPHERE_LAMP.elf.dir
-/mnt/share/ProjectFiles/Atmosphere-lamp/build_local/CMakeFiles/edit_cache.dir
-/mnt/share/ProjectFiles/Atmosphere-lamp/build_local/CMakeFiles/rebuild_cache.dir

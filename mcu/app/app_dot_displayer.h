@@ -19,7 +19,11 @@
 #define CLK_PIN		GPIO_PIN_5
 #define CS_PIN		GPIO_PIN_4
 #define DOT_SPI		SPI1
-#define TurnCount 0           /* 转动次数 */
+/**
+ * @brief 图案顺时针旋转次数（用于适配点阵模块实际安装方向）
+ * @note 取值建议为 0~3；0 表示不旋转
+ */
+#define TurnCount 0
 
 // clang-format on
 #endif
@@ -27,7 +31,7 @@
 // clang-format off
 
 /* 空图案 */
-static u8 APP_DOTD_NULL[8] = 
+static const u8 APP_DOTD_NULL[8] =
 {
 0b00000000,
 0b00000000,
@@ -40,7 +44,7 @@ static u8 APP_DOTD_NULL[8] =
 };
 
 /* 箭头图案 */
-static u8 APP_DOTD_ARROW[8] =
+static const u8 APP_DOTD_ARROW[8] =
 {
 0b00011000,
 0b00111100,
@@ -53,7 +57,7 @@ static u8 APP_DOTD_ARROW[8] =
 };
 
 /* 开始图案 */
-static u8 APP_DOTD_START[8] =
+static const u8 APP_DOTD_START[8] =
 {
 0b00000000,
 0b01000010,
@@ -66,7 +70,7 @@ static u8 APP_DOTD_START[8] =
 };
 
 /* 加速图案 */
-static u8 APP_DOTD_UP[8] = 
+static const u8 APP_DOTD_UP[8] =
 {
 0b00011000,
 0b00111100,
@@ -111,10 +115,13 @@ RESULT_RUN app_dotD_WriteLine(u8 addr, u8 data);
  * @brief 整体写入点阵函数
  *
  * @param arr 点阵对应行的数据
+ * @note
+ * arr[0] 写入第 1 行（addr=1），arr[7] 写入第 8 行（addr=8）
+ *
  * @return RESULT_RUN 运行结果
  * @date 2025/12/11
  */
-RESULT_RUN app_dotD_WriteALL(u8 arr[8]);
+RESULT_RUN app_dotD_WriteALL(const u8 arr[8]);
 
 /**
  * @brief 清空点阵屏的内容
@@ -133,10 +140,10 @@ RESULT_RUN app_dotD_Show_START();
  * @brief 转动图案函数（顺时针）
  *
  * @param old 原图案
- * @param ret 转动后的图案
+ * @param ret 转动后的图案（输出）
  * @return 是否转动成功
  */
-RESULT_RUN app_dotD_TurnWrite(u8 old[8], u8 ret[8]);
+RESULT_RUN app_dotD_TurnWrite(const u8 old[8], u8 ret[8]);
 
 /* 处理线程函数 */
 void app_dotD_dispose_Task();
