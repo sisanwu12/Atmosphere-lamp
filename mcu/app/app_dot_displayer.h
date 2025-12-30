@@ -87,6 +87,32 @@ static const u8 APP_DOTD_UP[8] =
   0b00000000
 };
 
+/* 减速图案（向下箭头） */
+static const u8 APP_DOTD_DOWN[8] =
+{
+  0b00000000,
+  0b00011000,
+  0b00011000,
+  0b00000000,
+  0b00011000,
+  0b00111100,
+  0b00111100,
+  0b00011000
+};
+
+/* 停车图案（“P”字母风格，便于一眼识别） */
+static const u8 APP_DOTD_STOP[8] =
+{
+  0b11111100,
+  0b10000110,
+  0b10000110,
+  0b11111100,
+  0b10000000,
+  0b10000000,
+  0b10000000,
+  0b00000000
+};
+
 // clang-format on
 
 /* ============================== 函数声明 ============================== */
@@ -99,6 +125,8 @@ RESULT_RUN app_dotD_Clear();
 RESULT_RUN app_dotD_Show_LEFT();
 RESULT_RUN app_dotD_Show_RIGHT();
 RESULT_RUN app_dotD_Show_UP();
+RESULT_RUN app_dotD_Show_DOWN();
+RESULT_RUN app_dotD_Show_STOP();
 RESULT_RUN app_dotD_Show_START();
 
 /**

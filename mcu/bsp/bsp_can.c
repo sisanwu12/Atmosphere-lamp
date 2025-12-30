@@ -16,6 +16,7 @@
 /* 头文件引用 */
 #include "bsp_can.h"
 #include "stm32f1xx_hal_gpio_ex.h"
+#include <stdio.h>
 
 /* 全局句柄 */
 CAN_HandleTypeDef hcan1;
@@ -35,8 +36,129 @@ static void bsp_can_mode_init(void);
 static void bsp_can_filter_init(void);
 static void bsp_can_nvic_init(void);
 static void bsp_can_rx_queue_init(void);
+static void bsp_can_gpio_clock_enable(GPIO_TypeDef *GPIOx);
+static bool bsp_can_calc_bit_timing(uint32_t pclk1_hz, uint32_t baudrate_bps);
 
 /* ============================== 内部函数定义 ============================== */
+/**
+ * @brief GPIO 时钟使能（根据 GPIO 组自动选择 RCC）
+ * @note 这里不直接依赖 bsp_gpio.c 的 static 函数，避免跨模块耦合。
+ */
+static void bsp_can_gpio_clock_enable(GPIO_TypeDef *GPIOx)
+{
+  switch ((uint32_t)GPIOx)
+  {
+  case (uint32_t)GPIOA:
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+    break;
+  case (uint32_t)GPIOB:
+    __HAL_RCC_GPIOB_CLK_ENABLE();
+    break;
+  case (uint32_t)GPIOC:
+    __HAL_RCC_GPIOC_CLK_ENABLE();
+    break;
+  case (uint32_t)GPIOD:
+    __HAL_RCC_GPIOD_CLK_ENABLE();
+    break;
+  case (uint32_t)GPIOE:
+    __HAL_RCC_GPIOE_CLK_ENABLE();
+    break;
+  default:
+    break;
+  }
+}
+
+/**
+ * @brief 根据当前 PCLK1 与目标波特率搜索一组可用位时序
+ * @param pclk1_hz      APB1 外设时钟（Hz）
+ * @param baudrate_bps  目标波特率（bps）
+ * @return true 找到可用参数并写入 hcan1.Init；false 未找到（保持原参数不变）
+ *
+ * @note
+ * - STM32 CAN 位时序约束：
+ *   - Prescaler：1~1024
+ *   - BS1：1~16TQ
+ *   - BS2：1~8TQ
+ *   - 总 TQ = 1(SYNC) + BS1 + BS2，通常 8~25 之间较常见
+ * - 这里使用“整除搜索”，确保波特率完全匹配，避免与其他节点长期漂移。
+ * - 以采样点 87.5% 为目标（常见经验值），在可行解中选“采样点最接近且 TQ 更大”的组合。
+ */
+static bool bsp_can_calc_bit_timing(uint32_t pclk1_hz, uint32_t baudrate_bps)
+{
+  if (pclk1_hz == 0 || baudrate_bps == 0)
+    return false;
+
+  static const uint32_t bs1_map[16] = {
+      CAN_BS1_1TQ,  CAN_BS1_2TQ,  CAN_BS1_3TQ,  CAN_BS1_4TQ,
+      CAN_BS1_5TQ,  CAN_BS1_6TQ,  CAN_BS1_7TQ,  CAN_BS1_8TQ,
+      CAN_BS1_9TQ,  CAN_BS1_10TQ, CAN_BS1_11TQ, CAN_BS1_12TQ,
+      CAN_BS1_13TQ, CAN_BS1_14TQ, CAN_BS1_15TQ, CAN_BS1_16TQ,
+  };
+  static const uint32_t bs2_map[8] = {
+      CAN_BS2_1TQ, CAN_BS2_2TQ, CAN_BS2_3TQ, CAN_BS2_4TQ,
+      CAN_BS2_5TQ, CAN_BS2_6TQ, CAN_BS2_7TQ, CAN_BS2_8TQ,
+  };
+
+  /* 目标采样点：87.5%（用千分比表示，避免浮点） */
+  const uint32_t target_sp_x1000 = 875U;
+
+  bool found = false;
+  uint32_t best_err = 0xFFFFFFFFU;
+  uint8_t best_tq = 0;
+  uint8_t best_bs1 = 0;
+  uint8_t best_bs2 = 0;
+  uint32_t best_prescaler = 0;
+
+  /* 搜索常见 TQ 范围：8~25 */
+  for (uint8_t tq = 8; tq <= 25; tq++)
+  {
+    for (uint8_t bs2 = 1; bs2 <= 8; bs2++)
+    {
+      int bs1 = (int)tq - 1 - (int)bs2;
+      if (bs1 < 1 || bs1 > 16)
+        continue;
+
+      uint32_t denom = baudrate_bps * (uint32_t)tq;
+      if (denom == 0)
+        continue;
+
+      /* 仅接受“完全整除”的组合 */
+      if ((pclk1_hz % denom) != 0)
+        continue;
+
+      uint32_t prescaler = pclk1_hz / denom;
+      if (prescaler < 1 || prescaler > 1024)
+        continue;
+
+      /* 采样点 = (1 + BS1) / TQ */
+      uint32_t sp_x1000 = (1000U * (uint32_t)(1 + bs1)) / (uint32_t)tq;
+      uint32_t err = (sp_x1000 > target_sp_x1000)
+                         ? (sp_x1000 - target_sp_x1000)
+                         : (target_sp_x1000 - sp_x1000);
+
+      /* 先比误差，再比 TQ（TQ 大通常更稳健） */
+      if (!found || err < best_err || (err == best_err && tq > best_tq))
+      {
+        found = true;
+        best_err = err;
+        best_tq = tq;
+        best_bs1 = (uint8_t)bs1;
+        best_bs2 = bs2;
+        best_prescaler = prescaler;
+      }
+    }
+  }
+
+  if (!found)
+    return false;
+
+  hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
+  hcan1.Init.TimeSeg1 = bs1_map[best_bs1 - 1];
+  hcan1.Init.TimeSeg2 = bs2_map[best_bs2 - 1];
+  hcan1.Init.Prescaler = best_prescaler;
+  return true;
+}
+
 /**
  * @brief 初始化 CAN1 相关 GPIO 与 AFIO 重映射
  * @note
@@ -47,21 +169,27 @@ static void bsp_can_gpio_init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-  /* GPIOB 与 AFIO 时钟 */
-  __HAL_RCC_GPIOB_CLK_ENABLE();
+  /* GPIO 与 AFIO 时钟 */
+  bsp_can_gpio_clock_enable(BSP_CAN1_GPIOx);
   __HAL_RCC_AFIO_CLK_ENABLE();
 
-  /* CAN1 重映射到 PB8/PB9（CASE 2） */
+  /* CAN1 引脚映射选择（CASE 1/2/3） */
+#if (BSP_CAN1_REMAP_CASE == 1)
+  __HAL_AFIO_REMAP_CAN1_1();
+#elif (BSP_CAN1_REMAP_CASE == 2)
   __HAL_AFIO_REMAP_CAN1_2();
+#elif (BSP_CAN1_REMAP_CASE == 3)
+  __HAL_AFIO_REMAP_CAN1_3();
+#endif
 
-  /* TX：PB9，复用推挽 */
+  /* TX：复用推挽 */
   GPIO_InitStruct.Pin = BSP_CAN1_TX_PIN;
   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(BSP_CAN1_GPIOx, &GPIO_InitStruct);
 
-  /* RX：PB8，输入（通常建议上拉，避免总线空闲时抖动） */
+  /* RX：输入（通常建议上拉，避免总线空闲时抖动） */
   GPIO_InitStruct.Pin = BSP_CAN1_RX_PIN;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
@@ -89,15 +217,45 @@ static void bsp_can_mode_init(void)
   hcan1.Init.ReceiveFifoLocked = DISABLE;
   hcan1.Init.TransmitFifoPriority = DISABLE;
 
-  /* 位时序配置（请按你的CAN总线波特率需求调整） */
-  hcan1.Init.Mode = CAN_MODE_NORMAL;
-  hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
-  hcan1.Init.TimeSeg1 = CAN_BS1_13TQ;
-  hcan1.Init.TimeSeg2 = CAN_BS2_2TQ;
-  hcan1.Init.Prescaler = 6;
+  /* 工作模式（正常/回环/静默回环等） */
+  hcan1.Init.Mode = BSP_CAN_MODE;
+
+  /* 位时序：根据 PCLK1 与目标波特率自动搜索一组可行参数 */
+  uint32_t pclk1_hz = HAL_RCC_GetPCLK1Freq();
+  bool ok = bsp_can_calc_bit_timing(pclk1_hz, BSP_CAN_BAUDRATE);
+  if (!ok)
+  {
+    /**
+     * 找不到可整除参数时的兜底：
+     * - 这里保留一组“比较常用”的默认值，便于你快速定位问题；
+     * - 但强烈建议：通过调整系统时钟/目标波特率，保证能找到“整除解”。
+     */
+    hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
+    hcan1.Init.TimeSeg1 = CAN_BS1_13TQ;
+    hcan1.Init.TimeSeg2 = CAN_BS2_2TQ;
+    hcan1.Init.Prescaler = 6;
+  }
 
   /* 初始化 CAN 外设 */
   (void)HAL_CAN_Init(&hcan1);
+
+#if BSP_CAN_DEBUG_PRINT
+  /* 仅用于联调：打印当前配置，帮助确认“引脚/模式/波特率”是否与你的硬件一致 */
+  {
+    /* BTR 的 TS1/TS2 字段存的是 “(实际TQ数 - 1)” */
+    uint32_t ts1 = ((hcan1.Init.TimeSeg1 & CAN_BTR_TS1) >> CAN_BTR_TS1_Pos) + 1U;
+    uint32_t ts2 = ((hcan1.Init.TimeSeg2 & CAN_BTR_TS2) >> CAN_BTR_TS2_Pos) + 1U;
+    uint32_t tq = 1U + ts1 + ts2;
+    uint32_t br = 0;
+    if (tq != 0 && hcan1.Init.Prescaler != 0)
+      br = pclk1_hz / (hcan1.Init.Prescaler * tq);
+    printf("[CAN] PCLK1=%lu Hz, target=%lu bps, actual=%lu bps, TQ=%lu, PSC=%lu, mode=%lu, remap=%d\r\n",
+           (unsigned long)pclk1_hz, (unsigned long)BSP_CAN_BAUDRATE,
+           (unsigned long)br, (unsigned long)tq,
+           (unsigned long)hcan1.Init.Prescaler, (unsigned long)BSP_CAN_MODE,
+           (int)BSP_CAN1_REMAP_CASE);
+  }
+#endif
 }
 
 /**
@@ -164,7 +322,19 @@ void can_init(void)
 
   /* 启动 CAN 并开启 FIFO0 接收中断 */
   (void)HAL_CAN_Start(&hcan1);
-  (void)HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
+  /**
+   * 开启通知：
+   * - RX FIFO0：用于接收
+   * - ERROR 系列：用于定位“无收发器/无ACK/波特率不匹配/总线未接”等常见问题
+   *
+   * @note
+   * - 错误回调发生在中断上下文，切勿在回调里 printf（可能导致阻塞/重入）。
+   * - 本工程在 app_can 任务里会周期性读取 HAL_CAN_GetError() 进行打印。
+   */
+  (void)HAL_CAN_ActivateNotification(
+      &hcan1,
+      CAN_IT_RX_FIFO0_MSG_PENDING | CAN_IT_ERROR_WARNING | CAN_IT_ERROR_PASSIVE |
+          CAN_IT_BUSOFF | CAN_IT_LAST_ERROR_CODE | CAN_IT_ERROR);
 }
 
 bool can_send_message(const can_message_t *msg)

@@ -14,6 +14,7 @@
 #include "stm32f1xx_hal_gpio.h"
 #include "stm32f1xx_hal_spi.h"
 #include "task.h"
+#include <stdio.h>
 #include <string.h>
 
 /* ============================== 全局变量 ============================== */
@@ -24,6 +25,29 @@ static u8 app_dotD_LEFT[8];
 static u8 app_dotD_RIGHT[8];
 static u8 app_dotD_START[8];
 static u8 app_dotD_UP[8];
+static u8 app_dotD_DOWN[8];
+static u8 app_dotD_STOP[8];
+
+/* ============================== 可选调试配置 ============================== */
+/**
+ * @brief 点阵调试打印开关
+ * @note
+ * - 打开后会输出事件位、显示切换等信息，便于定位“有事件但屏幕不亮”的原因；
+ * - 若你担心影响实时性，可改为 0。
+ */
+#ifndef APP_DOTD_DEBUG_PRINT
+#define APP_DOTD_DEBUG_PRINT 1
+#endif
+
+/**
+ * @brief 上电自检：是否启用 MAX7219 的“显示测试模式”
+ * @note
+ * - 开启后，点阵会全亮（不依赖图案数据），可用来快速判断“连线/供电/片选/SPI”是否正常；
+ * - 建议调试阶段保持 1，确认硬件正常后再改回 0。
+ */
+#ifndef APP_DOTD_POWERON_TEST
+#define APP_DOTD_POWERON_TEST 1
+#endif
 
 /* ============================== 内部函数 ============================== */
 /**
@@ -38,6 +62,8 @@ static RESULT_Init app_dotD_Pattern_Init(void)
   memcpy(app_dotD_RIGHT, APP_DOTD_RIGHT_ARROW, sizeof(app_dotD_RIGHT));
   memcpy(app_dotD_START, APP_DOTD_START, sizeof(app_dotD_START));
   memcpy(app_dotD_UP, APP_DOTD_UP, sizeof(app_dotD_UP));
+  memcpy(app_dotD_DOWN, APP_DOTD_DOWN, sizeof(app_dotD_DOWN));
+  memcpy(app_dotD_STOP, APP_DOTD_STOP, sizeof(app_dotD_STOP));
 
   for (u8 i = 0; i < TurnCount; i++)
   {
@@ -54,6 +80,12 @@ static RESULT_Init app_dotD_Pattern_Init(void)
 
     app_dotD_TurnWrite(app_dotD_UP, tmp);
     memcpy(app_dotD_UP, tmp, sizeof(tmp));
+
+    app_dotD_TurnWrite(app_dotD_DOWN, tmp);
+    memcpy(app_dotD_DOWN, tmp, sizeof(tmp));
+
+    app_dotD_TurnWrite(app_dotD_STOP, tmp);
+    memcpy(app_dotD_STOP, tmp, sizeof(tmp));
   }
 
   return ERR_Init_Finished;
@@ -148,6 +180,8 @@ RESULT_RUN app_dotD_Clear()
 RESULT_RUN app_dotD_Show_LEFT() { return app_dotD_WriteALL(app_dotD_LEFT); }
 RESULT_RUN app_dotD_Show_RIGHT() { return app_dotD_WriteALL(app_dotD_RIGHT); }
 RESULT_RUN app_dotD_Show_UP() { return app_dotD_WriteALL(app_dotD_UP); }
+RESULT_RUN app_dotD_Show_DOWN() { return app_dotD_WriteALL(app_dotD_DOWN); }
+RESULT_RUN app_dotD_Show_STOP() { return app_dotD_WriteALL(app_dotD_STOP); }
 RESULT_RUN app_dotD_Show_START() { return app_dotD_WriteALL(app_dotD_START); }
 
 RESULT_RUN app_dotD_TurnWrite(const u8 old[8], u8 ret[8])
@@ -175,7 +209,22 @@ void app_dotD_dispose_Task()
   EventGroupHandle_t evt = event_bus_getHandle();
   u8 state = 0; /* 简易状态机 */
 
-  /* 上电自检：显示 START 200ms */
+#if APP_DOTD_DEBUG_PRINT
+  printf("[DOT] task start\r\n");
+#endif
+
+#if APP_DOTD_POWERON_TEST
+  /**
+   * MAX7219 “显示测试模式”：
+   * - 写 0x0F=0x01 后，8x8 会全亮；
+   * - 用来验证：供电、CS、CLK、DIN、SPI 是否基本正常。
+   */
+  (void)app_dotD_WriteLine(0x0F, 0x01);
+  vTaskDelay(pdMS_TO_TICKS(200));
+  (void)app_dotD_WriteLine(0x0F, 0x00);
+#endif
+
+  /* 上电自检：显示 START 200ms（验证图案写入是否正常） */
   (void)app_dotD_Show_START();
   vTaskDelay(pdMS_TO_TICKS(200));
   (void)app_dotD_Clear();
@@ -184,8 +233,13 @@ void app_dotD_dispose_Task()
   {
     EventBits_t bits = xEventGroupWaitBits(
         evt,
-        EVT_TURN_LEFT | EVT_TURN_RIGHT | EVT_TURN_BACK | EVT_UP | EVT_USER_COM,
+        EVT_TURN_LEFT | EVT_TURN_RIGHT | EVT_TURN_BACK | EVT_UP | EVT_DOWN |
+            EVT_STOP | EVT_USER_COM,
         pdTRUE, pdFALSE, portMAX_DELAY);
+
+#if APP_DOTD_DEBUG_PRINT
+    printf("[DOT] evt bits=0x%08lX\r\n", (unsigned long)bits);
+#endif
 
     /* 回正优先级最高，避免回正时先闪另一图案 */
     if (bits & EVT_TURN_BACK)
@@ -194,30 +248,45 @@ void app_dotD_dispose_Task()
       state = 1;
     else if (bits & EVT_TURN_RIGHT)
       state = 2;
+    else if (bits & EVT_STOP)
+      state = 5;
+    else if (bits & EVT_DOWN)
+      state = 6;
     else if (bits & EVT_UP)
       state = 3;
     else if (bits & EVT_USER_COM)
       state = 4;
 
+    RESULT_RUN show_ret = ERR_RUN_Finished;
     switch (state)
     {
     case 1:
-      (void)app_dotD_Show_LEFT();
+      show_ret = app_dotD_Show_LEFT();
       break;
     case 2:
-      (void)app_dotD_Show_RIGHT();
+      show_ret = app_dotD_Show_RIGHT();
       break;
     case 3:
-      (void)app_dotD_Show_UP();
+      show_ret = app_dotD_Show_UP();
       break;
     case 4:
-      (void)app_dotD_Show_START();
+      show_ret = app_dotD_Show_START();
+      break;
+    case 5:
+      show_ret = app_dotD_Show_STOP();
+      break;
+    case 6:
+      show_ret = app_dotD_Show_DOWN();
       break;
     case 0:
     default:
-      (void)app_dotD_Clear();
+      show_ret = app_dotD_Clear();
       break;
     }
+
+#if APP_DOTD_DEBUG_PRINT
+    if (show_ret != ERR_RUN_Finished)
+      printf("[DOT] show error=%d\r\n", (int)show_ret);
+#endif
   }
 }
-
