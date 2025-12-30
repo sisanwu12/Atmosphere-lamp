@@ -26,6 +26,20 @@
 #define configTIMER_QUEUE_LENGTH 10
 #define configTIMER_TASK_STACK_DEPTH 256
 
+/* ============================= 调试/健壮性配置 ============================= */
+/**
+ * @brief 栈溢出检测（强烈建议开启）
+ * @note
+ * - 1：只检测任务切换时的栈边界
+ * - 2：更严格（推荐）
+ */
+#define configCHECK_FOR_STACK_OVERFLOW 2
+
+/**
+ * @brief malloc 失败钩子（堆不足时可定位问题）
+ */
+#define configUSE_MALLOC_FAILED_HOOK 1
+
 // 断言方式
 #define configASSERT(x)                                                        \
   if ((x) == 0)                                                                \

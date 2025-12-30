@@ -21,14 +21,22 @@ static inline void bsp_rcc_enable(GPIO_TypeDef *GPIOx)
   {
   case (u32)GPIOA:
     __HAL_RCC_GPIOA_CLK_ENABLE();
+    break;
   case (u32)GPIOB:
     __HAL_RCC_GPIOB_CLK_ENABLE();
+    break;
   case (u32)GPIOC:
     __HAL_RCC_GPIOC_CLK_ENABLE();
+    break;
   case (u32)GPIOD:
     __HAL_RCC_GPIOD_CLK_ENABLE();
+    break;
   case (u32)GPIOE:
     __HAL_RCC_GPIOE_CLK_ENABLE();
+    break;
+  default:
+    /* 传入非法 GPIO 组时不做任何事 */
+    break;
   }
 }
 

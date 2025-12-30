@@ -2,3 +2,6 @@
 build/
 # 排除 cache 文件夹
 .cache/
+
+# 本地临时构建目录（例如 Linux 下生成的 build_local*）
+build_local*/

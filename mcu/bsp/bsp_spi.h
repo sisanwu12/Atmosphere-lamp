@@ -4,6 +4,9 @@
  * @author	王广平
  **/
 
+#ifndef __BSP_SPI_H
+#define __BSP_SPI_H
+
 /* 头文件引用 */
 #include "ERR.h"
 #include "__port_type__.h"
@@ -75,3 +78,5 @@ RESULT_Init bsp_spi_Init(SPI_HandleTypeDef *hspi, SPI_TypeDef *SPIx, u32 Mode,
                          u32 CLKPhase, u32 NSS, u32 BaudRatePrescaler,
                          u32 FirstBit, u32 TIMode, u32 CRCCalculation,
                          u32 CRCPolynomial);
+
+#endif

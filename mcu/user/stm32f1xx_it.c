@@ -22,6 +22,21 @@ void SysTick_Handler(void)
   }
 }
 
+/**
+ * @brief HardFault 处理（用于严重错误定位）
+ * @note
+ * 很多“看起来卡死/延时不返回/外设不工作”的问题，最终其实是 HardFault。
+ * 这里给一个最小可用的陷入点，方便你在调试器里看到进入了 HardFault。
+ *
+ * 如果你希望通过串口打印更详细信息，可以后续增加寄存器解析（需要更多栈与代码量）。
+ */
+void HardFault_Handler(void)
+{
+  taskDISABLE_INTERRUPTS();
+  for (;;)
+    ;
+}
+
 /* 定时器3中断函数 */
 void TIM3_IRQHandler(void) { HAL_TIM_IRQHandler(app_gonio_getTIMHandle()); }
 
