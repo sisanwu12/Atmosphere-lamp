@@ -23,6 +23,15 @@
 #define GONIO_GPIOx		GPIOA					/* 指定GPIO分组 */
 #define GONIO_TIMx		TIM3					/* 指定定时器 */
 
+/**
+ * @brief PWM 解码方式选择
+ * @note
+ * 不同磁编码器的 PWM 输出，可能“高电平宽度”或“低电平宽度”才是有效角度数据。
+ * - 0：使用高电平宽度解码（默认）
+ * - 1：使用低电平宽度解码（若你发现 high 很小而 low 变化大，可改为 1）
+ */
+#define GONIO_PWM_DECODE_USE_LOW_TIME 0
+
 #endif
 // clang-format on
 /* 函数声明 */

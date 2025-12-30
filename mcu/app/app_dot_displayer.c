@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /**
  * @file		app_dot_displayer.c
  * @brief		定义操作该模块的函数
@@ -68,6 +69,87 @@ static RESULT_Init app_dotD_Pattern_Init(void)
 RESULT_Init app_dotD_Init()
 {
   RESULT_Init RET;
+=======
+/**
+ * @file		app_dot_displayer.c
+ * @brief		定义操作该模块的函数
+ * @author	王广平
+ */
+
+#define APP_DOT_DISPLAYER_C
+
+/* 头文件引用 */
+#include "app_dot_displayer.h"
+#include "ERR.h"
+#include "bsp_gpio.h"
+#include "bsp_spi.h"
+#include "event_bus.h"
+#include "stm32f1xx_hal_gpio.h"
+#include "stm32f1xx_hal_spi.h"
+#include <string.h>
+#include "task.h"
+
+
+/* 全局变量 */
+static SPI_HandleTypeDef DOT_DISPLAYER_SPI = {0};
+
+/* 所用图案 */
+static u8 app_dotD_LEFT[8];  /* 左转箭头图案 */
+static u8 app_dotD_RIGHT[8]; /* 右转箭头图案 */
+static u8 app_dotD_START[8]; /* 开始图案 */
+static u8 app_dotD_UP[8];    /* 加速图案 */
+
+/* 函数定义 */
+
+/* 图案初始化函数 */
+static inline RESULT_Init app_dotD_Pattern_Init()
+{
+  /**
+   * @note
+   * 原实现存在两个致命问题，可能导致点阵一直不亮：
+   * 1) TurnCount 在头文件里默认是 0，但循环写成 TurnCount - 1，会发生 u8 下溢，
+   *    变成 255 次循环，导致图案计算异常或耗时过长。
+   * 2) 未在 TurnCount==0 时给 app_dotD_* 图案赋初值，导致图案数组全为
+   * 0（全灭）。
+   *
+   * 这里的策略是：
+   * - 先把基础图案拷贝出来（TurnCount==0 也能正常显示）；
+   * - 如需旋转，再按 TurnCount 次数做 90° 旋转。
+   */
+
+  /* 左/右箭头分别使用不同的基础图案，避免左右显示成同一个方向 */
+  memcpy(app_dotD_LEFT, APP_DOTD_LEFT_ARROW, sizeof(app_dotD_LEFT));
+  memcpy(app_dotD_RIGHT, APP_DOTD_RIGHT_ARROW, sizeof(app_dotD_RIGHT));
+  memcpy(app_dotD_START, APP_DOTD_START, sizeof(app_dotD_START));
+  memcpy(app_dotD_UP, APP_DOTD_UP, sizeof(app_dotD_UP));
+
+  if (TurnCount == 0)
+    return ERR_Init_Finished;
+
+  for (u8 i = 0; i < TurnCount; i++)
+  {
+    u8 tmp[8];
+
+    memcpy(tmp, app_dotD_LEFT, sizeof(tmp));
+    app_dotD_TurnWrite(tmp, app_dotD_LEFT);
+
+    memcpy(tmp, app_dotD_RIGHT, sizeof(tmp));
+    app_dotD_TurnWrite(tmp, app_dotD_RIGHT);
+
+    memcpy(tmp, app_dotD_START, sizeof(tmp));
+    app_dotD_TurnWrite(tmp, app_dotD_START);
+
+    memcpy(tmp, app_dotD_UP, sizeof(tmp));
+    app_dotD_TurnWrite(tmp, app_dotD_UP);
+  }
+
+  return ERR_Init_Finished;
+}
+
+RESULT_Init app_dotD_Init()
+{
+  RESULT_Init RET;
+>>>>>>> 1f20ba5 (完善转向代码)
   /* 初始化GPIO */
   /* 时钟线与数据线初始化 */
   RET = bsp_gpio_AFPP_Init(DOT_GPIOx, CLK_PIN | DIN_PIN);
@@ -94,6 +176,7 @@ RESULT_Init app_dotD_Init()
   app_dotD_WriteLine(0x0A, 0x0F); // 亮度
   app_dotD_WriteLine(0x0B, 0x07); // 扫描 8 行
   app_dotD_WriteLine(0x0C, 0x01); // 开显示
+<<<<<<< HEAD
 
   /* 改变图案方向 */
   RET = app_dotD_Pattern_Init();
@@ -106,6 +189,18 @@ RESULT_Init app_dotD_Init()
   /* 初始化完成 */
   return ERR_Init_Finished;
 }
+=======
+
+  /* 改变图案方向 */
+  app_dotD_Pattern_Init();
+
+  /* 清屏函数 */
+  app_dotD_Clear();
+
+  /* 初始化完成 */
+  return ERR_Init_Finished;
+}
+>>>>>>> 1f20ba5 (完善转向代码)
 
 RESULT_RUN app_dotD_WriteLine(u8 addr, u8 data)
 {
@@ -118,6 +213,7 @@ RESULT_RUN app_dotD_WriteLine(u8 addr, u8 data)
     return RET;
   HAL_GPIO_WritePin(DOT_GPIOx, CS_PIN, GPIO_PIN_SET);
 
+<<<<<<< HEAD
   return ERR_RUN_Finished;
 }
 
@@ -179,6 +275,80 @@ void app_dotD_dispose_Task()
     EventBits_t bits = xEventGroupWaitBits(
         evt,
         EVT_TURN_LEFT | EVT_TURN_RIGHT | EVT_TURN_BACK | EVT_UP | EVT_USER_COM,
+=======
+  return ERR_RUN_Finished;
+}
+
+RESULT_RUN app_dotD_WriteALL(u8 arr[8])
+{
+  RESULT_RUN ret;
+  for (u8 i = 1; i <= 8; i++)
+  {
+    /**
+     * @note
+     * MAX7219 的行寄存器地址是 1~8，但数组下标是 0~7。
+     * 原实现使用 arr[i] 会越界访问（i=8 时读取 arr[8]），导致显示异常。
+     */
+    ret = app_dotD_WriteLine(i, arr[i - 1]);
+    if (ret)
+      return ret;
+  }
+  return ERR_RUN_Finished;
+}
+
+RESULT_RUN app_dotD_Clear()
+{
+  RESULT_RUN RET;
+  for (u8 i = 1; i <= 8; i++)
+  {
+    app_dotD_WriteLine(i, 0x00);
+  }
+
+  return ERR_RUN_Finished;
+}
+
+RESULT_RUN app_dotD_Show_LEFT() { return app_dotD_WriteALL(app_dotD_LEFT); }
+RESULT_RUN app_dotD_Show_RIGHT() { return app_dotD_WriteALL(app_dotD_RIGHT); }
+RESULT_RUN app_dotD_Show_UP() { return app_dotD_WriteALL(app_dotD_UP); }
+RESULT_RUN app_dotD_Show_START() { return app_dotD_WriteALL(app_dotD_START); }
+
+RESULT_RUN app_dotD_TurnWrite(u8 old[8], u8 ret[8])
+{
+  for (u8 r = 0; r < 8; r++)
+  {
+    u8 newRow = 0;
+    for (u8 c = 0; c < 8; c++)
+    {
+      u8 bit = (old[7 - c] >> r) & 1;
+      newRow |= bit << (7 - c);
+    }
+    ret[r] = newRow;
+  }
+
+  return ERR_RUN_Finished;
+}
+
+/* TODO：完成线程开发 */
+void app_dotD_dispose_Task()
+{
+  EventGroupHandle_t evt = event_bus_getHandle();
+  u8 state = 0; /* 简易状态机 */
+
+  /**
+   * @note
+   * 上电自检放到任务里做，避免在 main() 初始化阶段使用 HAL_Delay()
+   * 造成阻塞（HAL Tick 时基未就绪/与 FreeRTOS 冲突时容易卡死）。
+   */
+  app_dotD_Show_START();
+  vTaskDelay(pdMS_TO_TICKS(200));
+  app_dotD_Clear();
+
+  while (1)
+  {
+    EventBits_t bits = xEventGroupWaitBits(
+        evt,
+        EVT_TURN_LEFT | EVT_TURN_RIGHT | EVT_TURN_BACK | EVT_UP | EVT_USER_COM,
+>>>>>>> 1f20ba5 (完善转向代码)
         pdTRUE, pdFALSE, portMAX_DELAY);
 
     if (bits & EVT_TURN_LEFT)
@@ -225,4 +395,8 @@ void app_dotD_dispose_Task()
       break;
     }
   }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 1f20ba5 (完善转向代码)

@@ -36,7 +36,12 @@ int main(void)
   app_can_init();
 
   /* 添加方向盘角度检测线程 */
-  xTaskCreate(Task_Angle, "Angle", 128, NULL, 2, NULL);
+  /**
+   * @note
+   * Angle 线程里会做串口打印（printf），栈占用明显高于纯逻辑处理。
+   * 128（word）在某些 printf 配置下可能不够，容易出现“打印一会儿就停了”的情况。
+   */
+  xTaskCreate(Task_Angle, "Angle", 256, NULL, 2, NULL);
   /* 添加转向灯响应线程 */
   xTaskCreate(Task_Trun, "Trun", 128, NULL, 2, NULL);
   /* 添加点阵灯响应线程 */
@@ -45,4 +50,7 @@ int main(void)
   xTaskCreate(Task_CAN, "CAN", 128, NULL, 2, NULL);
 
   vTaskStartScheduler();
+
+  while (1)
+    ;
 }

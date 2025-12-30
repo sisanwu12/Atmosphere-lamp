@@ -90,6 +90,13 @@ file(GLOB SRC_FILES
 		${APP_DIR}/*.c
 )
 
+# NOTE:
+# HAL_Driver 目录里自带的 `stm32f1xx_hal_timebase_tim_template.c` 会覆盖 HAL 的
+# SysTick 时基，改用 TIM2 作为 HAL_Delay() 的时基。
+# 本工程使用 FreeRTOS（SysTick 作为 RTOS Tick），同时在启动阶段也需要 HAL_Delay，
+# 因此这里排除该模板文件，统一使用 SysTick 作为 HAL 的 Tick 时基。
+list(REMOVE_ITEM SRC_FILES ${LIB_DIR}/HAL_Driver/stm32f1xx_hal_timebase_tim_template.c)
+
 
 # 生成可执行文件（ELF）
 add_executable(${PROJECT_NAME}.elf ${SRC_FILES} ${STARTUP_FILE})

@@ -4,6 +4,7 @@
  * @author	王广平
  */
 
+<<<<<<< HEAD
 #ifndef __APP_DOT_DISPLAYER_H
 #define __APP_DOT_DISPLAYER_H
 
@@ -78,6 +79,105 @@ static const u8 APP_DOTD_UP[8] =
 0b00011000,
 0b00000000,
 0b00011000,
+=======
+#ifndef __APP_DOT_DISPLAYER_H
+#define __APP_DOT_DISPLAYER_H
+
+/* 头文件引用 */
+#include "ERR.h"
+#include "__port_type__.h"
+
+#ifdef APP_DOT_DISPLAYER_C
+// clang-format off
+
+#define DOT_GPIOx	GPIOA
+#define DIN_PIN		GPIO_PIN_7
+#define CLK_PIN		GPIO_PIN_5
+#define CS_PIN		GPIO_PIN_4
+#define DOT_SPI		SPI1
+#define TurnCount 0           /* 转动次数 */
+
+// clang-format on
+#endif
+
+// clang-format off
+
+/* 空图案 */
+static u8 APP_DOTD_NULL[8] = 
+{
+0b00000000,
+0b00000000,
+0b00000000,
+0b00000000,
+0b00000000,
+0b00000000,
+0b00000000,
+0b00000000
+};
+
+/* 箭头图案 */
+/**
+ * @brief 左转箭头图案（语义：向左）
+ * @note
+ * bit7 通常对应最左侧 LED，bit0 对应最右侧 LED。
+ * 若你的点阵模块左右相反，可在 app_dot_displayer.c 中对数据做 bit 反转，
+ * 或者重新调整下列图案的位序。
+ */
+static u8 APP_DOTD_LEFT_ARROW[8] =
+{
+0b00011000,
+0b00011100,
+0b11111110,
+0b11111111,
+0b11111110,
+0b00011100,
+>>>>>>> 1f20ba5 (完善转向代码)
+0b00011000,
+0b00000000
+};
+
+<<<<<<< HEAD
+// clang-format on
+
+/* 函数声明 */
+=======
+/**
+ * @brief 右转箭头图案（语义：向右）
+ */
+static u8 APP_DOTD_RIGHT_ARROW[8] =
+{
+0b00011000,
+0b00111000,
+0b01111111,
+0b11111111,
+0b01111111,
+0b00111000,
+0b00011000,
+0b00000000
+};
+
+/* 开始图案 */
+static u8 APP_DOTD_START[8] =
+{
+0b00000000,
+0b01000010,
+0b11100111,
+0b00000000,
+0b00000000,
+0b10000001,
+0b01111110,
+0b00000000
+};
+
+/* 加速图案 */
+static u8 APP_DOTD_UP[8] = 
+{
+0b00011000,
+0b00111100,
+0b00111100,
+0b00011000,
+0b00000000,
+0b00011000,
 0b00011000,
 0b00000000
 };
@@ -85,6 +185,7 @@ static const u8 APP_DOTD_UP[8] =
 // clang-format on
 
 /* 函数声明 */
+>>>>>>> 1f20ba5 (完善转向代码)
 
 /**
  * @brief 点阵显示器初始化函数
@@ -137,6 +238,7 @@ RESULT_RUN app_dotD_Show_UP();
 RESULT_RUN app_dotD_Show_START();
 
 /**
+<<<<<<< HEAD
  * @brief 转动图案函数（顺时针）
  *
  * @param old 原图案
@@ -148,4 +250,17 @@ RESULT_RUN app_dotD_TurnWrite(const u8 old[8], u8 ret[8]);
 /* 处理线程函数 */
 void app_dotD_dispose_Task();
 
+=======
+ * @brief 转动图案函数（顺时针）
+ *
+ * @param old 原图案
+ * @param ret 转动后的图案
+ * @return 是否转动成功
+ */
+RESULT_RUN app_dotD_TurnWrite(u8 old[8], u8 ret[8]);
+
+/* 处理线程函数 */
+void app_dotD_dispose_Task();
+
+>>>>>>> 1f20ba5 (完善转向代码)
 #endif
