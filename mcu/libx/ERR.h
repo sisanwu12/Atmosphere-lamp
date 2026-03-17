@@ -22,6 +22,9 @@ typedef enum RESULT_Init
 	ERR_Init_ERROR_SPI		= 0x14U,
 	ERR_Init_ERROR_ADC		= 0x15U,
 	ERR_Init_ERROR_DMA    = 0x16U,
+	ERR_Init_ERROR_CAN    = 0x17U,
+	ERR_Init_ERROR_CLOCK  = 0x18U,
+	ERR_Init_ERROR_RTOS   = 0x19U,
 	
 } RESULT_Init;
 

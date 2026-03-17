@@ -10,6 +10,7 @@
 /* 头文件引用 */
 #include "app_trun_lamp.h"
 #include "__port_type__.h"
+#include "app_state.h"
 #include "bsp_gpio.h"
 #include "event_bus.h"
 #include "FreeRTOS.h"
@@ -59,42 +60,31 @@ RESULT_RUN app_trunL_close_right()
 void app_trunL_dispose_Task()
 {
   EventGroupHandle_t evt = event_bus_getHandle();
-  u8 state = 0; /* 简易状态机 */
+  app_steer_state_t state = APP_STEER_CENTER;
   u8 blink_on = 0; /* 0=灭,1=亮 */
+  const TickType_t blink_period = pdMS_TO_TICKS(500);
+
+  app_trunL_close_left();
+  app_trunL_close_right();
 
   while (1)
   {
-    /**
-     * @note
-     * 本任务既要“响应事件”又要“周期性闪烁”，因此不能用 portMAX_DELAY 永久阻塞。
-     * 做法：用闪烁周期作为等待超时：
-     * - 收到事件：立即切换状态（并把灯置为亮）
-     * - 超时返回：表示本周期到了，执行一次翻转，实现闪烁
-     */
-    const TickType_t blink_period = pdMS_TO_TICKS(500);
-    EventBits_t bits = xEventGroupWaitBits(
-        evt, EVT_TURN_LEFT | EVT_TURN_RIGHT | EVT_TURN_BACK, pdTRUE, pdFALSE,
-        blink_period);
+    TickType_t wait_ticks =
+        (state == APP_STEER_CENTER) ? portMAX_DELAY : blink_period;
+    EventBits_t bits = xEventGroupWaitBits(evt, SIG_LAMP_UPDATE, pdTRUE,
+                                           pdFALSE, wait_ticks);
 
-    if (bits & EVT_TURN_LEFT)
+    if (bits & SIG_LAMP_UPDATE)
     {
-      state = 1; /* 左转状态 */
-      blink_on = 1;
-    }
-    else if (bits & EVT_TURN_RIGHT)
-    {
-      state = 2; /* 右转状态 */
-      blink_on = 1;
-    }
-    else if (bits & EVT_TURN_BACK)
-    {
-      state = 0; /* 回正状态/常态 */
-      blink_on = 0;
+      app_state_snapshot_t snapshot;
+      app_state_get_snapshot(&snapshot);
+      state = snapshot.steer;
+      blink_on = (state == APP_STEER_CENTER) ? 0 : 1;
     }
 
     switch (state)
     {
-    case 1: // 左转状态
+    case APP_STEER_LEFT:
       if (bits == 0) /* 超时：到达闪烁周期，翻转一次 */
         blink_on = (u8)!blink_on;
       HAL_GPIO_WritePin(LEFT_GPIOx, LEFT_PIN,
@@ -102,7 +92,7 @@ void app_trunL_dispose_Task()
       HAL_GPIO_WritePin(RIGHT_GPIOx, RIGHT_PIN, GPIO_PIN_RESET);
       break;
 
-    case 2: // 右转状态
+    case APP_STEER_RIGHT:
       if (bits == 0)
         blink_on = (u8)!blink_on;
       HAL_GPIO_WritePin(RIGHT_GPIOx, RIGHT_PIN,
@@ -110,7 +100,7 @@ void app_trunL_dispose_Task()
       HAL_GPIO_WritePin(LEFT_GPIOx, LEFT_PIN, GPIO_PIN_RESET);
       break;
 
-    case 0: // 回正状态/常态
+    case APP_STEER_CENTER:
     default:
       app_trunL_close_left();
       app_trunL_close_right();

@@ -31,13 +31,19 @@ RESULT_Init app_debug_init()
 {
   RESULT_Init ret = ERR_Init_Start;
 
-  /* 初始化GPIO引脚 */
-  bsp_gpio_Init(Debug_GPIOx, Debug_RX | Debug_TX, GPIO_MODE_AF_PP, GPIO_NOPULL,
-                GPIO_SPEED_FREQ_HIGH);
+  /* TX 使用复用推挽，RX 使用输入上拉 */
+  ret = bsp_gpio_Init(Debug_GPIOx, Debug_TX, GPIO_MODE_AF_PP, GPIO_NOPULL,
+                      GPIO_SPEED_FREQ_HIGH);
+  if (ret != ERR_Init_Finished)
+    return ret;
+
+  ret = bsp_gpio_Init(Debug_GPIOx, Debug_RX, GPIO_MODE_INPUT, GPIO_PULLUP,
+                      GPIO_SPEED_FREQ_HIGH);
+  if (ret != ERR_Init_Finished)
+    return ret;
 
   /* 初始化USART */
-  bsp_usart_init(&Debug_USART, Debug_USARTx, Debug_BRate);
-  ret = ERR_Init_Finished;
+  ret = bsp_usart_init(&Debug_USART, Debug_USARTx, Debug_BRate);
   return ret;
 }
 
@@ -102,6 +108,15 @@ void ERR_ShowBy_USART_Init(RESULT_Init res_init)
     break;
   case ERR_Init_ERROR_DMA:
     printf("DMA");
+    break;
+  case ERR_Init_ERROR_CAN:
+    printf("CAN");
+    break;
+  case ERR_Init_ERROR_CLOCK:
+    printf("CLOCK");
+    break;
+  case ERR_Init_ERROR_RTOS:
+    printf("RTOS");
     break;
   }
   printf(" Err Init\r\n");

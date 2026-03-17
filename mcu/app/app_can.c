@@ -5,11 +5,10 @@
  * @date    2025/12/27
  *
  * @note
- * 1) 为什么要在任务里做“事件位清除/设置”？
- *    - CAN 接收发生在中断上下文；FreeRTOS EventGroup 没有 ClearBitsFromISR，
- *      如果直接在中断里 SetBits，会导致旧事件位可能残留并与新事件位叠加。
- *    - 因此本模块在任务上下文统一维护“点阵灯模式事件”，确保：
- *      - 同一时刻 EVT_UP/EVT_DOWN/EVT_STOP 只会有一个有效（或全部清空为 NORMAL）。
+ * 1) 本模块负责“协议解析 -> 共享状态更新 -> 通知显示层刷新”。
+ *    - CAN 接收仍发生在中断上下文；
+ *    - 业务状态更新统一放在任务上下文中完成；
+ *    - 当前实现不再把加速/减速/停车编码到 EventGroup bit 中，而是写入 app_state。
  *
  * 2) 协议来源：
  *    - doc/datasheet/can总线通信帧格式.png
@@ -22,6 +21,7 @@
 /* 头文件引用 */
 #include "app_can.h"
 #include "FreeRTOS.h"
+#include "app_state.h"
 #include "bsp_can.h"
 #include "event_bus.h"
 #include "task.h"
@@ -68,41 +68,41 @@
 #endif
 
 /**
- * @brief 将协议中的“点阵灯模式”映射为事件位
+ * @brief 将协议中的“点阵灯模式”映射为共享状态
  * @param mode 协议 Byte2 的值
- * @return 对应的事件位；若为 NORMAL 或未知值，则返回 0
+ * @return 对应的运动状态
  */
-static inline EventBits_t app_can_mode_to_evt(uint8_t mode)
+static inline app_motion_mode_t app_can_mode_to_motion(uint8_t mode)
 {
   switch (mode)
   {
   case BSP_CAN_DOT_MODE_UP:
-    return EVT_UP;
+    return APP_MOTION_UP;
   case BSP_CAN_DOT_MODE_DOWN:
-    return EVT_DOWN;
+    return APP_MOTION_DOWN;
   case BSP_CAN_DOT_MODE_STOP:
-    return EVT_STOP;
+    return APP_MOTION_STOP;
   case BSP_CAN_DOT_MODE_NORMAL:
   default:
-    return 0;
+    return APP_MOTION_NORMAL;
   }
 }
 
 RESULT_Init app_can_init(void)
 {
-  /* 初始化 CAN 硬件与接收队列 */
-  can_init();
-
-  return ERR_Init_Finished;
+  return can_init();
 }
 
 void app_can_dispose_Task(void)
 {
   EventGroupHandle_t evt = event_bus_getHandle();
+  app_motion_mode_t current_mode = APP_MOTION_NORMAL;
 
   /* 用于控制“无报文时”的错误打印频率 */
   TickType_t last_err_print_tick = 0;
+#if APP_CAN_SELF_TEST_TX
   TickType_t last_self_tx_tick = 0;
+#endif
 
   while (1)
   {
@@ -215,30 +215,16 @@ void app_can_dispose_Task(void)
       continue;
     }
 
-    /* 将收到的模式映射为事件位（NORMAL/未知 -> 0） */
-    EventBits_t want_bits = app_can_mode_to_evt(mode);
-    const EventBits_t mode_mask = EVT_UP | EVT_DOWN | EVT_STOP;
-
-    /**
-     * 事件维护策略（关键点）：
-     * - 本项目中有些任务在 xEventGroupWaitBits(..., clearOnExit=pdTRUE) 下会“消费并清除事件位”；
-     * - 如果我们只在“mode变化”时 setBits，那么当任务清掉事件位后，即使对端持续发送同一模式，
-     *   也可能因为“mode未变”而不再 setBits，导致“看起来没有现象”。
-     *
-     * 因此这里改为：
-     * - 以事件组当前状态为准：只要当前状态与 want 不一致，就执行一次清空/设置；
-     * - 这样既能避免无意义的重复 set（减少事件风暴），也能在事件被消费后自动恢复。
-     */
-    EventBits_t now_bits = xEventGroupGetBits(evt) & mode_mask;
-    if (now_bits != want_bits)
+    app_motion_mode_t want_mode = app_can_mode_to_motion(mode);
+    if (want_mode != current_mode)
     {
-      xEventGroupClearBits(evt, mode_mask);
-      if (want_bits)
-        xEventGroupSetBits(evt, want_bits);
+      current_mode = want_mode;
+      app_state_update_motion(current_mode);
+      xEventGroupSetBits(evt, SIG_DISPLAY_UPDATE);
     }
 
     /* 可选：给调试/统计用的“收到CAN帧”事件 */
-    xEventGroupSetBits(evt, EVT_CAN_RX);
+    xEventGroupSetBits(evt, SIG_CAN_RX);
 
 #if APP_CAN_DEBUG_PRINT
     printf("[CAN] rx id=0x%lX, dlc=%u, mode=0x%02X (byte%u)\r\n",

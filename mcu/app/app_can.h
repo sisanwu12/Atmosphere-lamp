@@ -8,8 +8,7 @@
  * 本模块基于 bsp_can（硬件驱动）读取 CAN 报文，并按照
  * doc/datasheet/can总线通信帧格式.png 的约定解析出：
  * - 加速 / 减速 / 停车
- * 然后在 FreeRTOS 事件组中产生对应事件位：
- * - EVT_UP / EVT_DOWN / EVT_STOP
+ * 然后写入共享业务状态，并通过事件总线发出显示更新通知。
  */
 
 #ifndef __APP_CAN_H

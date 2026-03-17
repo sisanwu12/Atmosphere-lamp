@@ -1,5 +1,5 @@
 # 指定 cmake 最低版本需求
-cmake_minimum_required(VERSION 4.0.2)
+cmake_minimum_required(VERSION 3.0.2)
 # 指定项目名称
 project(ATMOSPHERE_LAMP)
 
@@ -46,7 +46,7 @@ set(CMAKE_CXX_FLAGS "${MCU_FLAGS} -Os -ffunction-sections -fdata-sections -Wall 
                        -fno-exceptions -fno-rtti -flto -fno-threadsafe-statics")
 
 # 指定链接文件
-set(CMAKE_EXE_LINKER_FLAGS "-T${LD_DIR}/STM32F103XB_FLASH.ld -Wl,--gc-sections -static")
+set(CMAKE_EXE_LINKER_FLAGS "-T${LD_DIR}/STM32F103C8_FLASH.ld -Wl,--gc-sections -static")
 
 
 
@@ -72,30 +72,62 @@ include_directories(
 
 add_definitions(-DSTM32F103xx)
 
-# 源文件
-file(GLOB SRC_FILES
-    # 库文件夹
-    ${LIB_DIR}/CMSIS/*.c
-    ${LIB_DIR}/HAL_Driver/*.c
-    ${LIB_DIR}/HAL_Driver/Legacy/*.c
+set(SRC_FILES
+    # CMSIS
+    ${LIB_DIR}/CMSIS/system_stm32f1xx.c
+    ${LIB_DIR}/CMSIS/syscalls.c
 
-	  # freeRTOS文件夹
-    ${ARM_CM3_DIR}/*.c
-    ${MEMMANG_DIR}/*.c
-    ${FRTOS_SRC_DIR}/*.c
+    # STM32 HAL
+    ${LIB_DIR}/HAL_Driver/stm32f1xx_hal.c
+    ${LIB_DIR}/HAL_Driver/stm32f1xx_hal_cortex.c
+    ${LIB_DIR}/HAL_Driver/stm32f1xx_hal_rcc.c
+    ${LIB_DIR}/HAL_Driver/stm32f1xx_hal_rcc_ex.c
+    ${LIB_DIR}/HAL_Driver/stm32f1xx_hal_flash.c
+    ${LIB_DIR}/HAL_Driver/stm32f1xx_hal_flash_ex.c
+    ${LIB_DIR}/HAL_Driver/stm32f1xx_hal_gpio.c
+    ${LIB_DIR}/HAL_Driver/stm32f1xx_hal_gpio_ex.c
+    ${LIB_DIR}/HAL_Driver/stm32f1xx_hal_dma.c
+    ${LIB_DIR}/HAL_Driver/stm32f1xx_hal_can.c
+    ${LIB_DIR}/HAL_Driver/stm32f1xx_hal_spi.c
+    ${LIB_DIR}/HAL_Driver/stm32f1xx_hal_tim.c
+    ${LIB_DIR}/HAL_Driver/stm32f1xx_hal_tim_ex.c
+    ${LIB_DIR}/HAL_Driver/stm32f1xx_hal_uart.c
+    ${LIB_DIR}/HAL_Driver/stm32f1xx_hal_usart.c
 
-    ${USER_DIR}/*.c
-    ${BSP_DIR}/*.c
-		${LIBX_DIR}/*.c
-		${APP_DIR}/*.c
+    # FreeRTOS
+    ${ARM_CM3_DIR}/port.c
+    ${MEMMANG_DIR}/heap_4.c
+    ${FRTOS_SRC_DIR}/croutine.c
+    ${FRTOS_SRC_DIR}/event_groups.c
+    ${FRTOS_SRC_DIR}/list.c
+    ${FRTOS_SRC_DIR}/queue.c
+    ${FRTOS_SRC_DIR}/tasks.c
+    ${FRTOS_SRC_DIR}/timers.c
+
+    # User
+    ${USER_DIR}/event_bus.c
+    ${USER_DIR}/freertos_hooks.c
+    ${USER_DIR}/main.c
+    ${USER_DIR}/stm32f1xx_it.c
+    ${USER_DIR}/system_boot.c
+
+    # BSP
+    ${BSP_DIR}/bsp_can.c
+    ${BSP_DIR}/bsp_gpio.c
+    ${BSP_DIR}/bsp_max7219.c
+    ${BSP_DIR}/bsp_spi.c
+    ${BSP_DIR}/bsp_timer.c
+    ${BSP_DIR}/bsp_usart.c
+
+    # APP
+    ${APP_DIR}/app_can.c
+    ${APP_DIR}/app_debug.c
+    ${APP_DIR}/app_display_policy.c
+    ${APP_DIR}/app_dot_displayer.c
+    ${APP_DIR}/app_gonio.c
+    ${APP_DIR}/app_state.c
+    ${APP_DIR}/app_trun_lamp.c
 )
-
-# NOTE:
-# HAL_Driver 目录里自带的 `stm32f1xx_hal_timebase_tim_template.c` 会覆盖 HAL 的
-# SysTick 时基，改用 TIM2 作为 HAL_Delay() 的时基。
-# 本工程使用 FreeRTOS（SysTick 作为 RTOS Tick），同时在启动阶段也需要 HAL_Delay，
-# 因此这里排除该模板文件，统一使用 SysTick 作为 HAL 的 Tick 时基。
-list(REMOVE_ITEM SRC_FILES ${LIB_DIR}/HAL_Driver/stm32f1xx_hal_timebase_tim_template.c)
 
 
 # 生成可执行文件（ELF）
@@ -106,6 +138,3 @@ add_custom_command(TARGET ${PROJECT_NAME}.elf POST_BUILD
     COMMAND ${CMAKE_OBJCOPY} -O ihex ${PROJECT_NAME}.elf ${PROJECT_NAME}.hex
     COMMAND ${CMAKE_OBJCOPY} -O binary ${PROJECT_NAME}.elf ${PROJECT_NAME}.bin
 )
-
-# 去除警告
-target_compile_options(${PROJECT_NAME}.elf PRIVATE -w)

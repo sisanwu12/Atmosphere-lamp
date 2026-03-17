@@ -1,0 +1,328 @@
+<mxfile host="65bd71144e">
+    <diagram id="sys-context" name="系统上下文">
+        <mxGraphModel dx="1019" dy="871" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1000" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="2" value="车载转向灯与氛围灯系统 - 仓库级系统上下文" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1;fontSize=22;" parent="1" vertex="1">
+                    <mxGeometry x="320" y="40" width="520" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="&lt;b&gt;方向盘角度传感器&lt;/b&gt;&lt;br&gt;PWM 输出" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=15;" parent="1" vertex="1">
+                    <mxGeometry x="120" y="240" width="190" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" value="&lt;b&gt;车辆 CAN 网络&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=15;" parent="1" vertex="1">
+                    <mxGeometry x="110" y="360" width="190" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="5" value="&lt;b&gt;CAN 收发器&lt;/b&gt;&lt;br&gt;物理层转换" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="340" y="360" width="160" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="6" value="&lt;b&gt;STM32F103 主控固件&lt;/b&gt;&lt;br&gt;FreeRTOS + HAL + App&lt;br&gt;main / event_bus / app_*" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;" parent="1" vertex="1">
+                    <mxGeometry x="560" y="200" width="260" height="220" as="geometry"/>
+                </mxCell>
+                <mxCell id="7" value="&lt;b&gt;基础转向灯&lt;/b&gt;&lt;br&gt;左 PA2 / 右 PA1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=15;" parent="1" vertex="1">
+                    <mxGeometry x="870" y="90" width="230" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="8" value="&lt;b&gt;MAX7219 8x8 点阵&lt;/b&gt;&lt;br&gt;SPI1: PA5 / PA7 / PA4" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=15;" parent="1" vertex="1">
+                    <mxGeometry x="880" y="265" width="230" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="9" value="&lt;b&gt;调试串口&lt;/b&gt;&lt;br&gt;USART1: PA9 / PA10" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=15;" parent="1" vertex="1">
+                    <mxGeometry x="870" y="450" width="230" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="10" value="&lt;b&gt;手机 App / BLE 客户端&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=15;" parent="1" vertex="1">
+                    <mxGeometry x="260" y="530" width="210" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="11" value="&lt;b&gt;ESP32-C3 扩展固件&lt;/b&gt;&lt;br&gt;Arduino BLE + NeoPixel&lt;br&gt;独立子工程" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=15;" parent="1" vertex="1">
+                    <mxGeometry x="570" y="510" width="200" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="12" value="&lt;b&gt;WS2812 灯带&lt;/b&gt;&lt;br&gt;左右灯效 / 刹车 / 危险报警" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=15;" parent="1" vertex="1">
+                    <mxGeometry x="870" y="590" width="240" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="13" value="STM32 负责主控制链路" style="shape=note;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="560" y="120" width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="14" value="ESP32 当前仅作为 BLE 氛围灯扩展&lt;br&gt;尚未与 STM32 建立代码级通信" style="shape=note;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="450" y="650" width="300" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="30" value="PWM" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="3" target="6" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="31" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" parent="1" source="4" target="5" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="32" value="CAN1 收/发" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="5" target="6" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="33" value="GPIO" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="6" target="7" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="985" y="240"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="34" value="SPI1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="6" target="8" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="35" value="USART1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="6" target="9" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="985" y="380"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="36" value="BLE" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="10" target="11" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="37" value="WS2812 控制" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="11" target="12" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="38" value="未来可通过 UART / CAN / GPIO 联动" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#666666;endArrow=open;endFill=0;fontSize=12;" parent="1" source="6" target="11" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+    <diagram id="stm32-mainline" name="STM32 主控主链路">
+        <mxGraphModel dx="1296" dy="1109" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1900" pageHeight="1150" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="2" value="STM32F103 主控软件架构 - 任务 / 事件 / 中断 / BSP 关系" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1;fontSize=22;" parent="1" vertex="1">
+                    <mxGeometry x="30" y="20" width="650" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="&lt;b&gt;main.c&lt;/b&gt;&lt;br&gt;HAL_Init&lt;br&gt;event_bus_init&lt;br&gt;app_debug_init / app_trunL_init / app_gonio_init / app_dotD_Init / app_can_init&lt;br&gt;&lt;br&gt;创建任务: Angle / Trun / Task_DotD / CAN" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=15;" parent="1" vertex="1">
+                    <mxGeometry x="700" y="60" width="500" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" value="&lt;b&gt;event_bus&lt;/b&gt;&lt;br&gt;FreeRTOS EventGroup&lt;br&gt;&lt;br&gt;通知位:&lt;br&gt;SIG_LAMP_UPDATE&lt;br&gt;SIG_DISPLAY_UPDATE&lt;br&gt;SIG_CAN_RX / SIG_RESERVED_USER" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=15;" parent="1" vertex="1">
+                    <mxGeometry x="810" y="360" width="280" height="180" as="geometry"/>
+                </mxCell>
+                <mxCell id="5" value="&lt;b&gt;TIM3 输入捕获 ISR 链&lt;/b&gt;&lt;br&gt;TIM3_IRQHandler&lt;br&gt;-&gt; HAL_TIM_IRQHandler&lt;br&gt;-&gt; HAL_TIM_IC_CaptureCallback&lt;br&gt;-&gt; app_gonio_dispose_ISP" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="120" y="250" width="360" height="130" as="geometry"/>
+                </mxCell>
+                <mxCell id="6" value="&lt;b&gt;app_gonio / Task_Angle&lt;/b&gt;&lt;br&gt;20ms 读取角度&lt;br&gt;第一次有效值校零&lt;br&gt;阈值: +90 左 / -90 右 / ±30 回正&lt;br&gt;稳定 15 次 ≈ 300ms&lt;br&gt;更新 app_state.steer + 通知灯光/显示刷新" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="120" y="420" width="360" height="190" as="geometry"/>
+                </mxCell>
+                <mxCell id="7" value="&lt;b&gt;CAN RX0 ISR 链&lt;/b&gt;&lt;br&gt;USB_LP_CAN1_RX0_IRQHandler&lt;br&gt;-&gt; HAL_CAN_IRQHandler&lt;br&gt;-&gt; HAL_CAN_RxFifo0MsgPendingCallback" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="120" y="670" width="360" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="8" value="&lt;b&gt;CAN_RX_QUEUE&lt;/b&gt;&lt;br&gt;FreeRTOS Queue&lt;br&gt;长度 = 1&lt;br&gt;xQueueOverwriteFromISR 保留最新帧" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="170" y="830" width="260" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="9" value="&lt;b&gt;app_can / Task_CAN&lt;/b&gt;&lt;br&gt;阻塞读 CAN_RX_QUEUE&lt;br&gt;按 Byte2 解析模式&lt;br&gt;0x00/01/02/03 -&gt; UP / DOWN / STOP / NORMAL&lt;br&gt;更新 app_state.motion + SIG_DISPLAY_UPDATE / SIG_CAN_RX" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="120" y="980" width="360" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="10" value="&lt;b&gt;app_debug&lt;/b&gt;&lt;br&gt;printf 重定向&lt;br&gt;USART1 115200&lt;br&gt;供 app_gonio / app_can / app_dot / hooks 输出日志" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="1260" y="250" width="330" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="11" value="&lt;b&gt;app_trun_lamp / Task_Trun&lt;/b&gt;&lt;br&gt;WaitBits(SIG_LAMP_UPDATE)&lt;br&gt;读取 app_state.steer&lt;br&gt;500ms 翻转一次，实现左右灯闪烁" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="1230" y="460" width="360" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="12" value="&lt;b&gt;app_dot_displayer / Task_DotD&lt;/b&gt;&lt;br&gt;WaitBits(SIG_DISPLAY_UPDATE)&lt;br&gt;读取 app_state 快照&lt;br&gt;经 app_display_policy 选择图案&lt;br&gt;上电自检 + START 图案" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="1210" y="700" width="390" height="200" as="geometry"/>
+                </mxCell>
+                <mxCell id="13" value="&lt;b&gt;bsp_timer&lt;/b&gt;&lt;br&gt;TIM3 输入捕获配置" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="550" y="470" width="180" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="14" value="&lt;b&gt;bsp_can&lt;/b&gt;&lt;br&gt;GPIO 重映射 / 位时序 / 滤波 / 中断 / 发送" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="550" y="980" width="200" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="15" value="&lt;b&gt;bsp_gpio&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="1230" y="960" width="160" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="16" value="&lt;b&gt;bsp_spi&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="1420" y="960" width="160" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="17" value="&lt;b&gt;bsp_usart&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="1610" y="960" width="160" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="18" value="&lt;b&gt;方向盘角度传感器&lt;/b&gt;&lt;br&gt;PWM -&gt; PA6 / TIM3_CH1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="20" y="460" width="90" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="19" value="&lt;b&gt;车辆 CAN 网络&lt;/b&gt;&lt;br&gt;经收发器接入&lt;br&gt;PB8 / PB9 / CAN1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="20" y="1010" width="90" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="20" value="&lt;b&gt;基础转向灯&lt;/b&gt;&lt;br&gt;左 PA2 / 右 PA1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="1640" y="470" width="170" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="21" value="&lt;b&gt;MAX7219 点阵&lt;/b&gt;&lt;br&gt;SPI1 SCK=PA5&lt;br&gt;MOSI=PA7&lt;br&gt;CS=PA4" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="1640" y="730" width="170" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="22" value="&lt;b&gt;串口调试终端&lt;/b&gt;&lt;br&gt;USART1 PA9 / PA10" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="1640" y="250" width="170" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="23" value="&lt;b&gt;运行时底座&lt;/b&gt;&lt;br&gt;FreeRTOS: Task / Queue / EventGroup / FromISR API&lt;br&gt;HAL Driver + CMSIS: 启动、中断、外设驱动" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="730" y="1030" width="420" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="24" value="&lt;b&gt;预留 / 历史代码&lt;/b&gt;&lt;br&gt;SIG_RESERVED_USER 预留给用户交互来源&lt;br&gt;bsp_dma 已封装但未接入主链路&lt;br&gt;CAN_RxDataHandle.* 整体注释，不参与当前行为" style="shape=note;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="760" y="860" width="360" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="25" value="&lt;b&gt;异常 / 诊断&lt;/b&gt;&lt;br&gt;freertos_hooks.c&lt;br&gt;HardFault_Handler&lt;br&gt;CAN/HAL/DOT/GONIO 串口日志" style="shape=note;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="1360" y="60" width="300" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="40" value="init + Task_Angle" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="3" target="6" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="41" value="init + Task_CAN" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="3" target="9" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="42" value="init + Task_Trun" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="3" target="11" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="43" value="init + Task_DotD" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="3" target="12" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="44" value="init" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="3" target="10" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="45" value="PWM 输入" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="18" target="5" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="46" value="更新 period / pulse / newData" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="5" target="6" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="47" value="写 steer + SIG_LAMP_UPDATE / SIG_DISPLAY_UPDATE" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="6" target="4" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="48" value="CAN 中断入队" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="7" target="8" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="49" value="xQueueReceive" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="8" target="9" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="50" value="写 motion + SIG_DISPLAY_UPDATE / SIG_CAN_RX" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="9" target="4" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="51" value="WaitBits(SIG_LAMP_UPDATE)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="4" target="11" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="52" value="WaitBits(SIG_DISPLAY_UPDATE)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="4" target="12" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="53" value="GPIO 初始化 + 输出" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="11" target="15" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="54" value="PA2 / PA1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="15" target="20" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="55" value="SPI 写行 / 图案" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="12" target="16" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="56" value="CS 控制" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="12" target="15" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="57" value="SPI1 + PA4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="16" target="21" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="58" value="printf" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#6c8ebf;endArrow=open;endFill=0;fontSize=12;" parent="1" source="6" target="10" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="59" value="printf" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#6c8ebf;endArrow=open;endFill=0;fontSize=12;" parent="1" source="9" target="10" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="60" value="printf" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#6c8ebf;endArrow=open;endFill=0;fontSize=12;" parent="1" source="12" target="10" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="61" value="USART1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="10" target="17" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="62" value="PA9 / PA10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="17" target="22" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="63" value="TIM3 配置" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="6" target="13" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="64" value="CAN 初始化 / 收发" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="9" target="14" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="65" value="PWM Capture" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="13" target="5" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="66" value="PB8 / PB9 / CAN1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="14" target="19" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="67" value="基于 FreeRTOS / HAL / CMSIS" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#666666;endArrow=open;endFill=0;fontSize=12;" parent="1" source="23" target="4" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="68" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#666666;endArrow=open;endFill=0;" parent="1" source="23" target="8" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="69" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#666666;endArrow=open;endFill=0;" parent="1" source="23" target="13" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="70" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#666666;endArrow=open;endFill=0;" parent="1" source="23" target="14" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="71" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#666666;endArrow=open;endFill=0;" parent="1" source="23" target="15" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="72" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#666666;endArrow=open;endFill=0;" parent="1" source="23" target="16" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="73" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#666666;endArrow=open;endFill=0;" parent="1" source="23" target="17" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+    <diagram id="esp32-extension" name="ESP32-C3 扩展链路">
+        <mxGraphModel dx="713" dy="610" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="950" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="2" value="ESP32-C3 BLE + WS2812 扩展链路" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1;fontSize=22;" parent="1" vertex="1">
+                    <mxGeometry x="30" y="20" width="420" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="&lt;b&gt;手机 App / BLE 客户端&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=15;" parent="1" vertex="1">
+                    <mxGeometry x="70" y="240" width="210" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" value="&lt;b&gt;BLEServer / BLEService / BLECharacteristic&lt;/b&gt;&lt;br&gt;SERVICE_UUID&lt;br&gt;CHARACTERISTIC_UUID" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=15;" parent="1" vertex="1">
+                    <mxGeometry x="400" y="210" width="320" height="150" as="geometry"/>
+                </mxCell>
+                <mxCell id="5" value="&lt;b&gt;MyCharacteristicCallbacks::onWrite&lt;/b&gt;&lt;br&gt;命令解析: brake / turnright / turnleft / offled / danger&lt;br&gt;更新状态位并 notify *_ok" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="800" y="200" width="350" height="170" as="geometry"/>
+                </mxCell>
+                <mxCell id="6" value="&lt;b&gt;运行时状态位&lt;/b&gt;&lt;br&gt;isRightBlink&lt;br&gt;isLeftBlink&lt;br&gt;isDangerBlink&lt;br&gt;right/left/dangerLedState" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="820" y="450" width="310" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="7" value="&lt;b&gt;loop()&lt;/b&gt;&lt;br&gt;rightLedBlink()&lt;br&gt;leftLedBlink()&lt;br&gt;DangerLedBlink()&lt;br&gt;发送 BLE 心跳包" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="1210" y="430" width="260" height="180" as="geometry"/>
+                </mxCell>
+                <mxCell id="8" value="&lt;b&gt;WS2812 灯带&lt;/b&gt;&lt;br&gt;Adafruit_NeoPixel&lt;br&gt;右转 / 左转 / 危险报警 / 刹车 / 全灭" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=15;" parent="1" vertex="1">
+                    <mxGeometry x="1230" y="180" width="250" height="170" as="geometry"/>
+                </mxCell>
+                <mxCell id="9" value="&lt;b&gt;命令集合&lt;/b&gt;&lt;br&gt;turnright&lt;br&gt;turnleft&lt;br&gt;danger&lt;br&gt;offled&lt;br&gt;brake" style="shape=note;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="70" y="420" width="180" height="170" as="geometry"/>
+                </mxCell>
+                <mxCell id="10" value="&lt;b&gt;仓库关系&lt;/b&gt;&lt;br&gt;该工程是独立 Arduino 风格子工程&lt;br&gt;当前未与 STM32 主控建立直接通信链路" style="shape=note;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="400" y="640" width="420" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="11" value="&lt;b&gt;setup()&lt;/b&gt;&lt;br&gt;Serial.begin&lt;br&gt;strip.begin/clear/show&lt;br&gt;BLEDevice::init&lt;br&gt;createServer / createService / startAdvertising" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="400" y="430" width="320" height="180" as="geometry"/>
+                </mxCell>
+                <mxCell id="30" value="BLE 写入命令" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="3" target="4" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="31" value="onWrite 回调" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="4" target="5" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="32" value="状态更新" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="5" target="6" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="33" value="轮询闪烁 / 心跳" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="6" target="7" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="34" value="strip.setPixelColor / show" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="7" target="8" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="35" value="notify: *_ok / heartbeat" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#9673a6;endArrow=open;endFill=0;fontSize=12;" parent="1" source="4" target="3" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="36" value="初始化 BLE 与灯带" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" parent="1" source="11" target="4" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="37" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" parent="1" source="11" target="8" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

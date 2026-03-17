@@ -32,10 +32,10 @@ static QueueHandle_t CAN_RX_QUEUE = NULL;
 
 /* ============================== 内部函数声明 ============================== */
 static void bsp_can_gpio_init(void);
-static void bsp_can_mode_init(void);
-static void bsp_can_filter_init(void);
+static RESULT_Init bsp_can_mode_init(void);
+static RESULT_Init bsp_can_filter_init(void);
 static void bsp_can_nvic_init(void);
-static void bsp_can_rx_queue_init(void);
+static RESULT_Init bsp_can_rx_queue_init(void);
 static void bsp_can_gpio_clock_enable(GPIO_TypeDef *GPIOx);
 static bool bsp_can_calc_bit_timing(uint32_t pclk1_hz, uint32_t baudrate_bps);
 
@@ -203,7 +203,7 @@ static void bsp_can_gpio_init(void)
  * - 波特率由：APB1 时钟 / Prescaler / (1 + BS1 + BS2) 决定
  * - 如果你的系统时钟/分频与此处不同，需要相应调整 Prescaler/BS1/BS2
  */
-static void bsp_can_mode_init(void)
+static RESULT_Init bsp_can_mode_init(void)
 {
   __HAL_RCC_CAN1_CLK_ENABLE();
 
@@ -237,7 +237,8 @@ static void bsp_can_mode_init(void)
   }
 
   /* 初始化 CAN 外设 */
-  (void)HAL_CAN_Init(&hcan1);
+  if (HAL_CAN_Init(&hcan1) != HAL_OK)
+    return ERR_Init_ERROR_CAN;
 
 #if BSP_CAN_DEBUG_PRINT
   /* 仅用于联调：打印当前配置，帮助确认“引脚/模式/波特率”是否与你的硬件一致 */
@@ -256,6 +257,7 @@ static void bsp_can_mode_init(void)
            (int)BSP_CAN1_REMAP_CASE);
   }
 #endif
+  return ERR_Init_Finished;
 }
 
 /**
@@ -264,7 +266,7 @@ static void bsp_can_mode_init(void)
  * - 目前配置为“全接收”（不过滤ID），将所有报文导入 FIFO0
  * - 后续如果你明确了控制帧 ID，可在此处改成按 ID 过滤，降低中断频率
  */
-static void bsp_can_filter_init(void)
+static RESULT_Init bsp_can_filter_init(void)
 {
   CAN_FilterTypeDef sFilterConfig = {0};
 
@@ -282,7 +284,10 @@ static void bsp_can_filter_init(void)
   sFilterConfig.FilterActivation = ENABLE;
   sFilterConfig.SlaveStartFilterBank = 14; /* 单 CAN 实例下该字段无意义，填默认即可 */
 
-  (void)HAL_CAN_ConfigFilter(&hcan1, &sFilterConfig);
+  if (HAL_CAN_ConfigFilter(&hcan1, &sFilterConfig) != HAL_OK)
+    return ERR_Init_ERROR_CAN;
+
+  return ERR_Init_Finished;
 }
 
 /**
@@ -301,27 +306,41 @@ static void bsp_can_nvic_init(void)
 /**
  * @brief 初始化 CAN 接收队列
  */
-static void bsp_can_rx_queue_init(void)
+static RESULT_Init bsp_can_rx_queue_init(void)
 {
   if (CAN_RX_QUEUE == NULL)
   {
     CAN_RX_QUEUE = xQueueCreate(1, sizeof(can_message_t));
   }
+
+  if (CAN_RX_QUEUE == NULL)
+    return ERR_Init_ERROR_RTOS;
+
+  return ERR_Init_Finished;
 }
 
 /* ============================== 对外接口实现 ============================== */
-void can_init(void)
+RESULT_Init can_init(void)
 {
-  /* 先初始化队列，避免 CAN 中断先来导致写队列失败 */
-  bsp_can_rx_queue_init();
+  RESULT_Init ret = bsp_can_rx_queue_init();
+  if (ret != ERR_Init_Finished)
+    return ret;
 
   bsp_can_gpio_init();
-  bsp_can_mode_init();
-  bsp_can_filter_init();
+
+  ret = bsp_can_mode_init();
+  if (ret != ERR_Init_Finished)
+    return ret;
+
+  ret = bsp_can_filter_init();
+  if (ret != ERR_Init_Finished)
+    return ret;
+
   bsp_can_nvic_init();
 
   /* 启动 CAN 并开启 FIFO0 接收中断 */
-  (void)HAL_CAN_Start(&hcan1);
+  if (HAL_CAN_Start(&hcan1) != HAL_OK)
+    return ERR_Init_ERROR_CAN;
   /**
    * 开启通知：
    * - RX FIFO0：用于接收
@@ -331,10 +350,14 @@ void can_init(void)
    * - 错误回调发生在中断上下文，切勿在回调里 printf（可能导致阻塞/重入）。
    * - 本工程在 app_can 任务里会周期性读取 HAL_CAN_GetError() 进行打印。
    */
-  (void)HAL_CAN_ActivateNotification(
-      &hcan1,
-      CAN_IT_RX_FIFO0_MSG_PENDING | CAN_IT_ERROR_WARNING | CAN_IT_ERROR_PASSIVE |
-          CAN_IT_BUSOFF | CAN_IT_LAST_ERROR_CODE | CAN_IT_ERROR);
+  if (HAL_CAN_ActivateNotification(
+          &hcan1,
+          CAN_IT_RX_FIFO0_MSG_PENDING | CAN_IT_ERROR_WARNING |
+              CAN_IT_ERROR_PASSIVE | CAN_IT_BUSOFF |
+              CAN_IT_LAST_ERROR_CODE | CAN_IT_ERROR) != HAL_OK)
+    return ERR_Init_ERROR_CAN;
+
+  return ERR_Init_Finished;
 }
 
 bool can_send_message(const can_message_t *msg)

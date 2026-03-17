@@ -19,9 +19,11 @@
 /* 头文件引用 */
 #include "app_gonio.h"
 #include "FreeRTOS.h"
+#include "app_state.h"
 #include "bsp_gpio.h"
 #include "bsp_timer.h"
 #include "event_bus.h"
+#include "system_boot.h"
 #include "stm32f1xx_hal_gpio.h"
 #include "stm32f1xx_hal_tim.h"
 #include "task.h"
@@ -35,6 +37,8 @@ static TIM_HandleTypeDef APP_GONIO_TIM = {0};
 static volatile u32 pulseWidth = 0; /* 高电平宽度（CCR2） */
 static volatile u32 pwmPeriod = 0;  /* PWM 周期（CCR1） */
 static volatile oboolean_t newData = bFALSE;
+
+#define GONIO_TIM_PSC_FOR_1MHZ ((SYSTEM_BOOT_APB1_TIMER_HZ / 1000000UL) - 1UL)
 
 /**
  * @brief 方向盘 0 点（单位：度）
@@ -66,12 +70,13 @@ RESULT_Init app_gonio_init()
                 GPIO_SPEED_FREQ_HIGH);
 
   /* 初始化 TIM3：72MHz/72 = 1MHz（1 tick = 1us） */
-  bsp_timer_SetStruct(&APP_GONIO_TIM, GONIO_TIMx, 72 - 1, TIM_COUNTERMODE_UP,
-                      0xFFFF, TIM_CLOCKDIVISION_DIV1,
+  bsp_timer_SetStruct(&APP_GONIO_TIM, GONIO_TIMx, GONIO_TIM_PSC_FOR_1MHZ,
+                      TIM_COUNTERMODE_UP, 0xFFFF, TIM_CLOCKDIVISION_DIV1,
                       TIM_AUTORELOAD_PRELOAD_DISABLE, 0);
 
   /* 输入捕获初始化 */
-  HAL_TIM_IC_Init(&APP_GONIO_TIM);
+  if (HAL_TIM_IC_Init(&APP_GONIO_TIM) != HAL_OK)
+    return ERR_Init_ERROR_TIM;
 
   /* CH1：上升沿捕获（周期） */
   TIM_IC_InitTypeDef sConfig = {0};
@@ -79,12 +84,16 @@ RESULT_Init app_gonio_init()
   sConfig.ICSelection = TIM_ICSELECTION_DIRECTTI; /* TI1 直连 */
   sConfig.ICPrescaler = TIM_ICPSC_DIV1;
   sConfig.ICFilter = 0;
-  HAL_TIM_IC_ConfigChannel(&APP_GONIO_TIM, &sConfig, TIM_CHANNEL_1);
+  if (HAL_TIM_IC_ConfigChannel(&APP_GONIO_TIM, &sConfig, TIM_CHANNEL_1) !=
+      HAL_OK)
+    return ERR_Init_ERROR_TIM;
 
   /* CH2：下降沿捕获（高电平宽度），复用 TI1 */
   sConfig.ICPolarity = TIM_INPUTCHANNELPOLARITY_FALLING;
   sConfig.ICSelection = TIM_ICSELECTION_INDIRECTTI; /* TI1 间接输入 */
-  HAL_TIM_IC_ConfigChannel(&APP_GONIO_TIM, &sConfig, TIM_CHANNEL_2);
+  if (HAL_TIM_IC_ConfigChannel(&APP_GONIO_TIM, &sConfig, TIM_CHANNEL_2) !=
+      HAL_OK)
+    return ERR_Init_ERROR_TIM;
 
   /**
    * @brief PWM 输入模式：复位从模式
@@ -97,15 +106,18 @@ RESULT_Init app_gonio_init()
   sSlaveConfig.InputTrigger = TIM_TS_TI1FP1;
   sSlaveConfig.TriggerPolarity = TIM_TRIGGERPOLARITY_RISING;
   sSlaveConfig.TriggerFilter = 0;
-  HAL_TIM_SlaveConfigSynchro(&APP_GONIO_TIM, &sSlaveConfig);
+  if (HAL_TIM_SlaveConfigSynchro(&APP_GONIO_TIM, &sSlaveConfig) != HAL_OK)
+    return ERR_Init_ERROR_TIM;
 
   /* 使能 TIM3 中断 */
   HAL_NVIC_SetPriority(TIM3_IRQn, 2, 0);
   HAL_NVIC_EnableIRQ(TIM3_IRQn);
 
   /* 开始输入捕获中断 */
-  HAL_TIM_IC_Start_IT(&APP_GONIO_TIM, TIM_CHANNEL_1);
-  HAL_TIM_IC_Start_IT(&APP_GONIO_TIM, TIM_CHANNEL_2);
+  if (HAL_TIM_IC_Start_IT(&APP_GONIO_TIM, TIM_CHANNEL_1) != HAL_OK)
+    return ERR_Init_ERROR_TIM;
+  if (HAL_TIM_IC_Start_IT(&APP_GONIO_TIM, TIM_CHANNEL_2) != HAL_OK)
+    return ERR_Init_ERROR_TIM;
 
   ret = ERR_Init_Finished;
   return ret;
@@ -200,12 +212,7 @@ void app_gonio_dispose_Task()
   TickType_t last_nodata_tick = 0;
   const TickType_t nodata_period = pdMS_TO_TICKS(1000);
 
-  enum
-  {
-    STEER_CENTER = 0,
-    STEER_LEFT,
-    STEER_RIGHT
-  } state = STEER_CENTER;
+  app_steer_state_t state = APP_STEER_CENTER;
 
   const float TURN_ON_DEG = 90.0f; /* +90 左转 / -90 右转 */
   const float CENTER_DEG = 30.0f;  /* 回正判定阈值（绝对值） */
@@ -275,7 +282,7 @@ void app_gonio_dispose_Task()
     /* 转向状态机 */
     switch (state)
     {
-    case STEER_CENTER:
+    case APP_STEER_CENTER:
       if (angle >= TURN_ON_DEG)
       {
         left_cnt++;
@@ -295,19 +302,21 @@ void app_gonio_dispose_Task()
       if (left_cnt >= STABLE_COUNT)
       {
         left_cnt = 0;
-        state = STEER_LEFT;
-        xEventGroupSetBits(evt, EVT_TURN_LEFT);
+        state = APP_STEER_LEFT;
+        app_state_update_steer(state);
+        xEventGroupSetBits(evt, SIG_LAMP_UPDATE | SIG_DISPLAY_UPDATE);
       }
       else if (right_cnt >= STABLE_COUNT)
       {
         right_cnt = 0;
-        state = STEER_RIGHT;
-        xEventGroupSetBits(evt, EVT_TURN_RIGHT);
+        state = APP_STEER_RIGHT;
+        app_state_update_steer(state);
+        xEventGroupSetBits(evt, SIG_LAMP_UPDATE | SIG_DISPLAY_UPDATE);
       }
       break;
 
-    case STEER_LEFT:
-    case STEER_RIGHT:
+    case APP_STEER_LEFT:
+    case APP_STEER_RIGHT:
     default:
       if (angle <= CENTER_DEG && angle >= -CENTER_DEG)
         center_cnt++;
@@ -319,8 +328,9 @@ void app_gonio_dispose_Task()
         center_cnt = 0;
         left_cnt = 0;
         right_cnt = 0;
-        state = STEER_CENTER;
-        xEventGroupSetBits(evt, EVT_TURN_BACK);
+        state = APP_STEER_CENTER;
+        app_state_update_steer(state);
+        xEventGroupSetBits(evt, SIG_LAMP_UPDATE | SIG_DISPLAY_UPDATE);
       }
       break;
     }
@@ -330,4 +340,3 @@ void app_gonio_dispose_Task()
 }
 
 TIM_HandleTypeDef *app_gonio_getTIMHandle() { return &APP_GONIO_TIM; }
-

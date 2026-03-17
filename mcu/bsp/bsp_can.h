@@ -13,6 +13,7 @@
 #define __BSP_CAN_H
 
 /* 头文件引用 */
+#include "ERR.h"
 #include "FreeRTOS.h"
 #include "queue.h"
 #include "stm32f1xx_hal.h"
@@ -70,7 +71,7 @@
 #if (BSP_CAN1_REMAP_CASE == 1)
 #define BSP_CAN1_RX_PIN GPIO_PIN_11
 #define BSP_CAN1_TX_PIN GPIO_PIN_12
-#define BSP_CAN1_GPIOx GPIOB
+#define BSP_CAN1_GPIOx GPIOA
 #elif (BSP_CAN1_REMAP_CASE == 2)
 #define BSP_CAN1_RX_PIN GPIO_PIN_8
 #define BSP_CAN1_TX_PIN GPIO_PIN_9
@@ -122,7 +123,7 @@ extern CAN_HandleTypeDef hcan1;
  * @brief CAN1 初始化（GPIO/重映射/波特率/滤波/中断/接收队列）
  * @note 需在 vTaskStartScheduler() 之前调用，建议在 event_bus_init() 之后调用。
  */
-void can_init(void);
+RESULT_Init can_init(void);
 
 /**
  * @brief 发送 CAN 报文（标准帧/扩展帧均支持）

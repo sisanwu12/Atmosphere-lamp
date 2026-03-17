@@ -12,6 +12,7 @@
 #define __EVENT_BUS_H
 
 /* 头文件引用 */
+#include "ERR.h"
 #include "FreeRTOS.h"
 #include "event_groups.h"
 #include "task.h"
@@ -20,28 +21,19 @@
 // clang-format off
 typedef enum
 {
-  EVT_NONE       = 0,          /* 无事件 */
+  SIG_NONE            = 0,          /* 无事件 */
 
-  /* 1~7：  底层驱动事件 */
-  EVT_USART_RX   = (1 << 1),   /* usart接收事件 */
-  EVT_CAN_RX     = (1 << 2),   /* can接收事件 */
+  /* 0~7: 通知型事件 */
+  SIG_LAMP_UPDATE    = (1 << 0),    /* 灯光状态已更新 */
+  SIG_DISPLAY_UPDATE = (1 << 1),    /* 显示状态已更新 */
+  SIG_CAN_RX         = (1 << 2),    /* 收到有效 CAN 报文 */
+  SIG_RESERVED_USER  = (1 << 3),    /* 预留给用户交互来源 */
 
-  /* 8~15:  控制逻辑事件 */
-  EVT_TURN_BACK  = (1 << 8),   /* 回正事件 */
-  EVT_TURN_LEFT  = (1 << 9),   /* 左转事件 */
-  EVT_TURN_RIGHT = (1 << 10),  /* 右转事件 */
-  EVT_UP         = (1 << 11),  /* 加速事件 */
-  EVT_DOWN       = (1 << 12),  /* 减速事件 */
-  EVT_STOP       = (1 << 13),  /* 停车事件 */
-
-  /* 16~23: 用户交互事件 */
-  EVT_USER_COM   = (1 << 16), /* 用户靠近 */
-
-} MAIN_EVT_T;
+} system_signal_t;
 // clang-format on
 
 /* 函数声明 */
-void event_bus_init(void);
+RESULT_Init event_bus_init(void);
 EventGroupHandle_t event_bus_getHandle(void);
 
 #endif

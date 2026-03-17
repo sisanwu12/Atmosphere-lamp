@@ -22,12 +22,16 @@
 
 ### STM32 主控部分
 
+- `system_boot`：统一系统时钟、初始化顺序和任务创建
+- `app_state`：保存共享业务状态，作为灯光系统唯一真相源
 - `app_gonio`：采集方向盘磁编码器 PWM，判断左转、右转、回正
 - `app_trun_lamp`：驱动左右基础转向灯闪烁
+- `app_display_policy`：根据共享状态决定点阵显示图案优先级
 - `app_dot_displayer`：驱动 MAX7219 点阵显示状态图案
-- `app_can`：解析 CAN 报文中的模式字段，映射为显示事件
+- `app_can`：解析 CAN 报文中的模式字段，更新共享状态并通知显示刷新
 - `app_debug`：通过串口输出运行日志和错误信息
-- `event_bus`：使用 FreeRTOS EventGroup 实现模块间协同
+- `event_bus`：使用 FreeRTOS EventGroup 实现通知型模块协同
+- `bsp_max7219`：封装 MAX7219 寄存器写入、测试模式和清屏
 
 ### ESP32-C3 扩展部分
 
@@ -57,13 +61,13 @@ flowchart LR
     I --> J[WS2812 灯带]
 ```
 
-STM32 主控内部采用“任务 + 事件”的架构：
+STM32 主控内部采用“任务 + 共享状态 + 通知”的架构：
 
-1. `main.c` 初始化各模块并创建 FreeRTOS 任务
-2. `app_gonio` 产生转向事件
-3. `app_can` 产生车辆状态事件
-4. `app_trun_lamp` 消费转向事件，控制左右灯闪烁
-5. `app_dot_displayer` 消费转向和车辆状态事件，更新点阵图案
+1. `main.c` 调用 `system_boot` 完成系统时钟、模块初始化和任务创建
+2. `app_gonio` 更新转向状态，并通知灯光/显示链路刷新
+3. `app_can` 更新车辆运动状态，并通知显示链路刷新
+4. `app_trun_lamp` 读取 `app_state` 快照，控制左右灯闪烁
+5. `app_dot_displayer` 读取 `app_state` 快照，经 `app_display_policy` 选择图案后刷新点阵
 
 更完整的软件架构说明见：[doc/架构设计.md](doc/架构设计.md)
 
@@ -103,7 +107,7 @@ STM32 主控内部采用“任务 + 事件”的架构：
 
 - CAN 正常模式下需要外接 CAN 收发器，不能直接只连 MCU 引脚。
 - CAN 重映射、模式和波特率可在 `mcu/bsp/bsp_can.h` 中调整。
-- 点阵方向可通过 `mcu/app/app_dot_displayer.h` 中的 `TurnCount` 调整旋转次数。
+- 点阵方向可通过 `mcu/app/app_dot_displayer.h` 中的 `APP_DOTD_TURN_COUNT` 调整旋转次数。
 
 ## 软件设计要点
 
@@ -113,18 +117,14 @@ STM32 主控内部采用“任务 + 事件”的架构：
 - `User` 层负责系统编排和任务组织
 - `BSP` 层负责底层外设访问
 
-### 2. 事件驱动
+### 2. 状态与通知解耦
 
-系统通过 `FreeRTOS EventGroup` 管理关键事件，包括：
+系统使用两层协作机制：
 
-- `EVT_TURN_LEFT`
-- `EVT_TURN_RIGHT`
-- `EVT_TURN_BACK`
-- `EVT_UP`
-- `EVT_DOWN`
-- `EVT_STOP`
+- `app_state` 保存共享业务状态：`steer / motion / user_hint`
+- `event_bus` 只负责通知型 bit：`SIG_LAMP_UPDATE / SIG_DISPLAY_UPDATE / SIG_CAN_RX / SIG_RESERVED_USER`
 
-这种方式降低了模块间直接耦合，便于后续加入新的显示源或控制逻辑。
+这种方式把“状态值”和“唤醒信号”分开，避免事件被消费后丢失业务状态。
 
 ### 3. 中断轻量化
 
@@ -205,7 +205,7 @@ openocd -f interface/cmsis-dap.cfg \
 ### 点阵联调
 
 - 点阵模块上电后带有测试模式与 `START` 图案自检
-- 若显示方向不对，可调整 `TurnCount`
+- 若显示方向不对，可调整 `APP_DOTD_TURN_COUNT`
 
 ## 文档索引
 
@@ -221,8 +221,8 @@ openocd -f interface/cmsis-dap.cfg \
 当前仓库已经具备以下基础：
 
 - STM32 主控业务链路完整
-- FreeRTOS 任务和事件协作已成型
-- CAN 状态到点阵显示的映射已实现
+- FreeRTOS 任务、共享状态和通知总线协作已成型
+- CAN 状态到点阵显示的映射已实现，并由显示策略模块统一仲裁
 - ESP32-C3 BLE 氛围灯扩展已具备独立演示能力
 
 后续可继续完善：
